@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DynamicForm, type FieldValues } from "./DynamicForm";
-import { buildValuesSchema, type FieldSpec, type PublicFormKind } from "@/lib/forms/fields";
+import { validateAnswers, type FieldSpec, type PublicFormKind } from "@/lib/forms/fields";
 import { btnPri, card } from "@/components/ui/styles";
 
 type Result = { pid: string | null; status?: string; returning?: boolean; date?: string };
@@ -36,7 +36,7 @@ export function PublicForm({
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setFormError(null);
-    const parsed = buildValuesSchema(fields).safeParse(values);
+    const parsed = validateAnswers(fields, values);
     if (!parsed.success) {
       const next: Record<string, string> = {};
       for (const issue of parsed.error.issues) next[String(issue.path[0])] ??= issue.message;

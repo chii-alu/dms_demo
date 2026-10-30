@@ -5,12 +5,14 @@ import { questionsSchema } from "@/lib/forms/questions";
 import { formatDate, formatDateRange } from "@/lib/dates";
 import { PublicForm } from "@/components/forms/PublicForm";
 import { card } from "@/components/ui/styles";
+import { MASTERCLASS_TEMPLATE_ID } from "@/lib/forms/registration";
 
 type PublicFormData = {
   code: string;
   kind: PublicFormKind;
   status: "draft" | "open" | "closed";
   questions: unknown;
+  template: string | null;
   pillar: string;
   intervention: string;
   session: {
@@ -86,6 +88,8 @@ export default async function PublicFormPage({ params }: { params: Promise<{ cod
 }
 
 function buildFields(form: PublicFormData): FieldSpec[] {
+  // A masterclass template is the whole form: no standard questions are added.
+  if (form.kind === "intake" && form.template === MASTERCLASS_TEMPLATE_ID) return form.questions as FieldSpec[];
   const questions = questionsSchema.safeParse(form.questions);
   return publicFields(form.kind, questions.success ? questions.data : [], form.session.dates);
 }

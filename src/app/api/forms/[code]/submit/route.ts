@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { allowRequest } from "@/lib/rate-limit";
-import { publicFields, buildValuesSchema, type FieldSpec } from "@/lib/forms/fields";
+import { publicFields, validateAnswers, buildValuesSchema, type FieldSpec } from "@/lib/forms/fields";
+import { MASTERCLASS_TEMPLATE_ID, splitRegistration } from "@/lib/forms/registration";
 import { questionsSchema } from "@/lib/forms/questions";
 
 export const runtime = "nodejs";
@@ -14,11 +15,21 @@ type PublicForm = {
   kind: "intake" | "attendance" | "feedback";
   status: "draft" | "open" | "closed";
   questions: unknown;
+  template: string | null;
   session: { dates: string[]; kind: string; application_deadline: string | null };
 };
 
 const error = (status: number, message: string, fieldErrors?: Record<string, string>) =>
   NextResponse.json({ ok: false, error: message, fieldErrors }, { status });
+
+function validationError(issues: { path: PropertyKey[]; message: string }[]) {
+  const fieldErrors: Record<string, string> = {};
+  for (const issue of issues) {
+    const key = String(issue.path[0]);
+    if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+  }
+  return error(400, "Some answers need attention.", fieldErrors);
+}
 
 // Postgres error codes raised by the §4 rules (see public_form_rpcs migration).
 function fromDbError(e: { code?: string; message: string }) {
@@ -64,17 +75,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const f = form as PublicForm;
   if (f.status !== "open") return error(409, "This form is not accepting responses");
 
+  const values = typeof body.values === "object" && body.values ? (body.values as Record<string, unknown>) : {};
+
+  // A masterclass registration: its own questions, branching, and its own registration rules.
+  if (f.kind === "intake" && f.template === MASTERCLASS_TEMPLATE_ID) {
+    const template = validateAnswers(f.questions as FieldSpec[], values);
+    if (!template.success) return validationError(template.error.issues);
+    const { profile, registration } = splitRegistration(template.data as Record<string, unknown>);
+    const { data, error: rpcError } = await supabase.rpc("submit_session_registration", {
+      p_code: code,
+      p_profile: profile,
+      p_answers: registration,
+    });
+    if (rpcError) return fromDbError(rpcError);
+    return NextResponse.json({ ok: true, data });
+  }
+
   const questions = questionsSchema.safeParse(f.questions);
   const fields: FieldSpec[] = publicFields(f.kind, questions.success ? questions.data : [], f.session.dates);
-  const parsed = buildValuesSchema(fields).safeParse(typeof body.values === "object" && body.values ? body.values : {});
-  if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const key = String(issue.path[0]);
-      if (!fieldErrors[key]) fieldErrors[key] = issue.message;
-    }
-    return error(400, "Some answers need attention.", fieldErrors);
-  }
+  const parsed = buildValuesSchema(fields).safeParse(values);
+  if (!parsed.success) return validationError(parsed.error.issues);
   const v = parsed.data as Record<string, unknown>;
 
   // Only the custom questions' answers are stored, keyed by question id (SPEC §3, §5).
