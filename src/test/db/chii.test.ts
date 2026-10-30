@@ -225,7 +225,7 @@ describe("reporting views (addendum §7)", () => {
 
   it("reach counts each person once, split by demographics", async () => {
     const c = await cohort("Masterclass", "Reach cohort");
-    const p = (await resolve("Reach Person", "reach@example.org", null, null, null, { gender: "Female", residence_country_code: "RW" })).chii_id;
+    const p = (await resolve("Reach Person", "reach@example.org", null, null, null, { gender: "Female", residence_country: "RW" })).chii_id;
     await db.query("insert into participation (chii_id, cohort_id, status) values ($1, $2, 'registered')", [p, c]);
     const r = await db.query<{ people: number }>(
       "select sum(people)::int people from v_reach_by_pillar where pillar = 'HENT' and gender = 'Female' and residence_country = 'RW'",
