@@ -35,6 +35,12 @@ describe("masterclass registration form", () => {
     expect(JSON.stringify(f)).not.toMatch(/amina/);
   });
 
+  it("asks for the ALU student email only on the ALU domains", async () => {
+    const r = await asAnon(db, "select public.get_registration_form($1) as f", [CODE]);
+    const student = r.rows[0].f.questions.find((q: { id: string }) => q.id === "student_email");
+    expect(student.emailDomains).toEqual(["alustudent.com", "alumni.alustudent.com"]);
+  });
+
   it("returns nothing for an unknown form", async () => {
     const r = await asAnon(db, "select public.get_registration_form('no-such-form') as f");
     expect(r.rows[0].f).toBeNull();
