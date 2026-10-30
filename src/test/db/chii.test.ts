@@ -128,9 +128,21 @@ describe("access (addendum §6 and the visibility rules)", () => {
     expect(summary.rows).toHaveLength(1);
   });
 
-  it("only the admin (data owner) reads identity and standing", async () => {
-    expect((await asUser(db, HENT_STAFF, "select count(*)::int n from beneficiary_identity where chii_id = $1", [person])).rows[0].n).toBe(0);
-    expect((await asUser(db, ADMIN, "select count(*)::int n from beneficiary_identity where chii_id = $1", [person])).rows[0].n).toBe(1);
+  it("identity and standing: admin and the person's own pillar staff only", async () => {
+    await db.query("insert into student_standing (chii_id, financial_status) values ($1, 'Good Standing') on conflict do nothing", [person]);
+    const hecoOnly = (await resolve("Access HECO Only", "access-heco@example.org")).chii_id;
+    await db.query("insert into participation (chii_id, cohort_id, status) values ($1, $2, 'registered')", [hecoOnly, hecoCohort]);
+    await db.query("insert into student_standing (chii_id, financial_status) values ($1, 'Good Standing')", [hecoOnly]);
+    const count = async (user: string, chii: string, table: string) =>
+      (await asUser(db, user, `select count(*)::int n from ${table} where chii_id = $1`, [chii])).rows[0].n;
+    // HENT staff see people linked to a HENT cohort, not people only in HECO.
+    expect(await count(HENT_STAFF, person, "beneficiary_identity")).toBe(1);
+    expect(await count(HENT_STAFF, person, "student_standing")).toBe(1);
+    expect(await count(HENT_STAFF, hecoOnly, "beneficiary_identity")).toBe(0);
+    expect(await count(HENT_STAFF, hecoOnly, "student_standing")).toBe(0);
+    // HECO staff see the HECO-only person, and the admin sees everyone.
+    expect(await count(HECO_STAFF, hecoOnly, "beneficiary_identity")).toBe(1);
+    expect(await count(ADMIN, hecoOnly, "beneficiary_identity")).toBe(1);
   });
 
   it("reviewers read no person-level data", async () => {
