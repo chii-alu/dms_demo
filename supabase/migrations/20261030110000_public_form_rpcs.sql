@@ -54,7 +54,11 @@ security definer
 set search_path = ''
 as $$
 declare
-  f record;
+  v_form_status public.form_status;
+  v_session_id uuid;
+  v_session_kind public.session_kind;
+  v_capacity int;
+  v_deadline date;
   v_email text;
   v_name text;
   v_participant public.participants%rowtype;
@@ -62,20 +66,20 @@ declare
   v_count int;
   v_status public.entry_status;
 begin
-  select f.id, f.status, f.session_id, s.kind as session_kind, s.capacity, s.application_deadline
-    into f
+  select v_form_status, v_session_id, s.kind, s.capacity, s.application_deadline
+    into v_form_status, v_session_id, v_session_kind, v_capacity, v_deadline
   from public.forms f
-  join public.sessions s on s.id = f.session_id
-  where f.code = p_code and f.kind = 'intake';
+  join public.sessions s on s.id = v_session_id
+  where f.code = p_code and v_kind = 'intake';
   if not found then
     raise exception 'Form not found' using errcode = 'P0002';
   end if;
-  if f.status <> 'open' then
+  if v_form_status <> 'open' then
     raise exception 'This form is not accepting responses' using errcode = 'P0001';
   end if;
-  if f.session_kind = 'application' and f.application_deadline is not null
-     and public.programme_today() > f.application_deadline then
-    raise exception 'Applications closed on %', f.application_deadline using errcode = 'P0001';
+  if v_session_kind = 'application' and v_deadline is not null
+     and public.programme_today() > v_deadline then
+    raise exception 'Applications closed on %', v_deadline using errcode = 'P0001';
   end if;
 
   v_email := lower(trim(coalesce(p_profile ->> 'email', '')));
@@ -88,7 +92,7 @@ begin
   end if;
 
   -- Serialise submissions for this session so capacity and duplicate checks cannot race.
-  perform 1 from public.sessions where id = f.session_id for update;
+  perform 1 from public.sessions where id = v_session_id for update;
 
   -- §4.6: one participant per email, case-insensitive; reuse the PID.
   select * into v_participant from public.participants where email = v_email;
@@ -96,10 +100,10 @@ begin
 
   -- §4.7: one entry per participant per session.
   if v_returning and exists (
-    select 1 from public.entries e where e.session_id = f.session_id and e.participant_id = v_participant.id
+    select 1 from public.entries e where e.session_id = v_session_id and e.participant_id = v_participant.id
   ) then
     raise exception '% has already % for this session.', v_email,
-      case when f.session_kind = 'application' then 'applied' else 'registered' end
+      case when v_session_kind = 'application' then 'applied' else 'registered' end
       using errcode = '23505';
   end if;
 
@@ -121,15 +125,15 @@ begin
   returning * into v_participant;
 
   -- §4.8 and §4.9: applications are always 'applied'; registrations wait-list at capacity.
-  if f.session_kind = 'application' then
+  if v_session_kind = 'application' then
     v_status := 'applied';
   else
-    select count(*) into v_count from public.entries where session_id = f.session_id and status = 'registered';
-    v_status := case when coalesce(f.capacity, 0) > 0 and v_count >= f.capacity then 'waitlisted' else 'registered' end;
+    select count(*) into v_count from public.entries where session_id = v_session_id and status = 'registered';
+    v_status := case when coalesce(v_capacity, 0) > 0 and v_count >= v_capacity then 'waitlisted' else 'registered' end;
   end if;
 
   insert into public.entries (session_id, participant_id, status, answers, source)
-  values (f.session_id, v_participant.id, v_status, coalesce(p_answers, '{}'::jsonb), 'self');
+  values (v_session_id, v_participant.id, v_status, coalesce(p_answers, '{}'::jsonb), 'self');
 
   return jsonb_build_object('pid', v_participant.pid, 'status', v_status, 'returning', v_returning);
 end;
@@ -143,20 +147,23 @@ security definer
 set search_path = ''
 as $$
 declare
-  f record;
+  v_form_status public.form_status;
+  v_session_id uuid;
+  v_session_kind public.session_kind;
+  v_dates date[];
   v_participant public.participants%rowtype;
   v_entry public.entries%rowtype;
   v_eligible public.entry_status;
 begin
-  select f.id, f.status, f.session_id, s.kind as session_kind, s.dates
-    into f
+  select v_form_status, v_session_id, s.kind, s.dates
+    into v_form_status, v_session_id, v_session_kind, v_dates
   from public.forms f
-  join public.sessions s on s.id = f.session_id
-  where f.code = p_code and f.kind = 'attendance';
+  join public.sessions s on s.id = v_session_id
+  where f.code = p_code and v_kind = 'attendance';
   if not found then
     raise exception 'Form not found' using errcode = 'P0002';
   end if;
-  if f.status <> 'open' then
+  if v_form_status <> 'open' then
     raise exception 'This form is not accepting responses' using errcode = 'P0001';
   end if;
 
@@ -166,25 +173,25 @@ begin
       using errcode = 'P0001';
   end if;
 
-  v_eligible := case when f.session_kind = 'application' then 'selected' else 'registered' end;
-  select * into v_entry from public.entries where session_id = f.session_id and participant_id = v_participant.id;
+  v_eligible := case when v_session_kind = 'application' then 'selected' else 'registered' end;
+  select * into v_entry from public.entries where session_id = v_session_id and participant_id = v_participant.id;
   if not found or v_entry.status <> v_eligible then
     raise exception 'This email is not on the list for this session.' using errcode = 'P0001';
   end if;
 
-  if not (p_date = any (f.dates)) then
+  if not (p_date = any (v_dates)) then
     raise exception 'Choose one of the session dates.' using errcode = '22023';
   end if;
 
   if exists (
     select 1 from public.attendance a
-    where a.session_id = f.session_id and a.participant_id = v_participant.id and a.date = p_date
+    where a.session_id = v_session_id and a.participant_id = v_participant.id and a.date = p_date
   ) then
     raise exception '% is already checked in for %.', v_participant.name, p_date using errcode = '23505';
   end if;
 
   insert into public.attendance (session_id, participant_id, date, method)
-  values (f.session_id, v_participant.id, p_date, 'self');
+  values (v_session_id, v_participant.id, p_date, 'self');
 
   return jsonb_build_object('pid', v_participant.pid, 'date', p_date);
 end;
@@ -207,34 +214,35 @@ security definer
 set search_path = ''
 as $$
 declare
-  f record;
+  v_form_status public.form_status;
+  v_session_id uuid;
   v_participant public.participants%rowtype;
 begin
-  select f.id, f.status, f.session_id
-    into f
+  select v_form_status, v_session_id
+    into v_form_status, v_session_id
   from public.forms f
-  where f.code = p_code and f.kind = 'feedback';
+  where f.code = p_code and v_kind = 'feedback';
   if not found then
     raise exception 'Form not found' using errcode = 'P0002';
   end if;
-  if f.status <> 'open' then
+  if v_form_status <> 'open' then
     raise exception 'This form is not accepting responses' using errcode = 'P0001';
   end if;
 
   select * into v_participant from public.participants where email = lower(trim(coalesce(p_email, '')));
   if not found or not exists (
-    select 1 from public.attendance a where a.session_id = f.session_id and a.participant_id = v_participant.id
+    select 1 from public.attendance a where a.session_id = v_session_id and a.participant_id = v_participant.id
   ) then
     raise exception 'We have no attendance record for this email at this session, so feedback is not linked. Check the email used to register.'
       using errcode = 'P0001';
   end if;
 
-  if exists (select 1 from public.feedback fb where fb.session_id = f.session_id and fb.participant_id = v_participant.id) then
+  if exists (select 1 from public.feedback fb where fb.session_id = v_session_id and fb.participant_id = v_participant.id) then
     raise exception 'Feedback from this participant has already been recorded for this session.' using errcode = '23505';
   end if;
 
   insert into public.feedback (session_id, participant_id, satisfaction, relevance, nps, most_useful, improve, answers)
-  values (f.session_id, v_participant.id, p_satisfaction, p_relevance, p_nps,
+  values (v_session_id, v_participant.id, p_satisfaction, p_relevance, p_nps,
           nullif(p_most_useful, ''), nullif(p_improve, ''), coalesce(p_answers, '{}'::jsonb));
 
   return jsonb_build_object('pid', v_participant.pid);
