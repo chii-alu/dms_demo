@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { defaultFeedbackQuestions, defaultIntakeQuestions, DEFAULT_RUBRIC, type Pillar, type SessionKind } from "@/lib/forms/defaults";
 import { formKindSchema, formStatusSchema, questionsSchema, rubricSchema, sessionInputSchema, type SessionInput } from "@/lib/sessions/schema";
 import type { Question } from "@/lib/forms/questions";
+import { z } from "zod";
+import { ENTRY_STATUSES } from "@/lib/sessions/status";
 
 // Server Actions return a result instead of throwing, so forms can show the message.
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
@@ -233,4 +235,58 @@ export async function setInterventionType(interventionId: string, type: string):
 
   revalidatePath(`/manage/interventions/${interventionId}`);
   return { ok: true, data: undefined };
+}
+
+const uuidSchema = z.string().uuid();
+
+// Per-row and bulk status changes. The database checks the status is valid for the session kind (§4.15).
+export async function setEntryStatuses(sessionId: string, entryIds: string[], status: string): Promise<ActionResult<{ updated: number }>> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+
+  const ids = z.array(uuidSchema).min(1).max(500).safeParse(entryIds);
+  if (!ids.success) return fail("Choose at least one person.");
+  const st = z.enum(ENTRY_STATUSES).safeParse(status);
+  if (!st.success) return fail("Unknown status.");
+
+  const { data, error } = await supabase.rpc("set_entry_statuses", {
+    p_session_id: sessionId,
+    p_entry_ids: ids.data,
+    p_status: st.data,
+  });
+  if (error) return fail(explain(error));
+
+  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  return { ok: true, data: { updated: Number(data ?? 0) } };
+}
+
+// Save the signed-in reviewer's 1–5 score per criterion for one application.
+export async function saveEntryScores(entryId: string, scores: Record<string, number>): Promise<ActionResult> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+
+  const parsed = z
+    .array(z.object({ criterion_id: uuidSchema, score: z.number().int().min(1).max(5) }))
+    .safeParse(Object.entries(scores).map(([criterion_id, score]) => ({ criterion_id, score })));
+  if (!parsed.success) return fail("Scores must be whole numbers from 1 to 5.");
+  if (!uuidSchema.safeParse(entryId).success) return fail("That application could not be found.");
+
+  const { error } = await supabase.rpc("save_scores", { p_entry_id: entryId, p_scores: parsed.data });
+  if (error) return fail(explain(error));
+
+  revalidatePath("/manage/sessions", "layout");
+  return { ok: true, data: undefined };
+}
+
+// "Add manually": staff enter a registration or application on a participant's behalf.
+export async function addEntryManually(sessionId: string, profile: Record<string, unknown>): Promise<ActionResult<{ pid: string; status: string }>> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+  if (!uuidSchema.safeParse(sessionId).success) return fail("That session could not be found.");
+
+  const { data, error } = await supabase.rpc("staff_add_entry", { p_session_id: sessionId, p_profile: profile });
+  if (error) return fail(explain(error));
+
+  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  return { ok: true, data: data as { pid: string; status: string } };
 }
