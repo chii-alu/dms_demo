@@ -46,10 +46,17 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
   const registrations = sessions.reduce((n, s) => n + (s.entries[0]?.count ?? 0), 0);
   const upcoming = sessions.filter((s) => sessionStatus(s.dates, today) === "Upcoming").length;
 
-  const { count: feedbackCount } = await supabase
-    .from("feedback")
-    .select("id", { count: "exact", head: true })
-    .in("session_id", sessions.map((s) => s.id));
+  const feedbackCount = sessions.length
+    ? (
+        await supabase
+          .from("feedback")
+          .select("id", { count: "exact", head: true })
+          .in(
+            "session_id",
+            sessions.map((s) => s.id),
+          )
+      ).count
+    : 0;
 
   const copyOptions: CopyOption[] = sorted.map((s) => ({
     id: s.id,
