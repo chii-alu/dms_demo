@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { deleteSession } from "@/app/manage/actions";
 import { Dialog } from "@/components/ui/Dialog";
 import { btn, btnDanger } from "@/components/ui/styles";
+import { usePortal } from "./usePortal";
 
 export function DeleteSessionButton({
   sessionId,
@@ -16,6 +17,7 @@ export function DeleteSessionButton({
   registrations: number;
 }) {
   const router = useRouter();
+  const portal = usePortal();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export function DeleteSessionButton({
       setError(result.error);
       return;
     }
-    router.push(`/manage/interventions/${result.data.interventionId}`);
+    router.push(`/manage/${portal}/interventions/${result.data.interventionId}`);
   };
 
   return (

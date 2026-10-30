@@ -3,9 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { SessionDetails } from "@/components/manage/SessionDetails";
 import { requireTab } from "@/lib/sessions/guard";
 
-export default async function SessionDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  await requireTab("details", id);
+export default async function SessionDetailsPage({ params }: { params: Promise<{ portal: string; id: string }> }) {
+  const { portal, id } = await params;
+  await requireTab("details", id, portal);
   const supabase = await createClient();
   const { data: s } = await supabase
     .from("sessions")

@@ -3,7 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { StaffAdmin, type StaffRow } from "@/components/manage/StaffAdmin";
 
 // Admin only (SPEC §8). The list comes from a database function that checks the caller is an admin.
-export default async function StaffPage() {
+export default async function StaffPage({ params }: { params: Promise<{ portal: string }> }) {
+  const { portal } = await params;
+  // Staff access belongs to the admin portal only.
+  if (portal !== "admin") notFound();
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("list_staff");
   if (error) {

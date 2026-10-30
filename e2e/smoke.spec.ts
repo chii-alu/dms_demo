@@ -8,8 +8,8 @@ test("landing page links to Manage and Dashboard", async ({ page }) => {
 });
 
 test("signed-out visitors to /manage are sent to login with a return path", async ({ page }) => {
-  await page.goto("/manage/registry");
-  await expect(page).toHaveURL(/\/login\?next=%2Fmanage%2Fregistry$/);
+  await page.goto("/manage/admin/registry");
+  await expect(page).toHaveURL(/\/login\?next=%2Fmanage%2Fadmin%2Fregistry$/);
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 });
 

@@ -1,10 +1,14 @@
 import { signIn } from "./actions";
-import { PORTALS, PORTAL_LABEL, isPortal, type Portal } from "@/lib/auth/portals";
+import { PORTAL_LABEL, isPortal, type Portal } from "@/lib/auth/portals";
+
+// The order the views appear in on the sign-in page.
+const VIEW_ORDER: Portal[] = ["admin", "hent", "hemp", "heco"];
 
 const messages: Record<string, string> = {
   invalid: "That email and password did not match a MELA staff account.",
   "no-access": "This account is signed in but has no MELA staff role. Ask an admin to add you.",
-  portal: "Your account does not have access to that portal. Choose a portal you belong to.",
+  portal: "Your account does not have access to that view. Choose a view you belong to.",
+  choose: "Choose a view before signing in.",
 };
 
 export default async function LoginPage({
@@ -13,7 +17,6 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string; portal?: string }>;
 }) {
   const { error, next, portal } = await searchParams;
-  const selected: Portal = isPortal(portal) ? portal : "admin";
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
@@ -28,21 +31,26 @@ export default async function LoginPage({
         )}
 
         <form action={signIn} className="mt-5 flex flex-col gap-4">
-          <input type="hidden" name="next" value={next ?? "/manage"} />
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            Portal
-            <select
-              name="portal"
-              defaultValue={selected}
-              className="rounded-md border border-line bg-surface px-3 py-2 font-normal"
-            >
-              {PORTALS.map((p) => (
-                <option key={p} value={p}>
-                  {PORTAL_LABEL[p]}
-                </option>
+          <input type="hidden" name="next" value={next && next !== "/manage" ? next : ""} />
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-1.5 text-sm font-semibold">Choose a view</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {VIEW_ORDER.map((p) => (
+                <label key={p} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="portal"
+                    value={p}
+                    required
+                    className="peer sr-only"
+                  />
+                  <span className="block rounded-md border border-line px-3 py-2 text-center text-sm font-medium hover:border-muted peer-checked:border-accent peer-checked:bg-accent-soft peer-checked:text-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
+                    {PORTAL_LABEL[p]}
+                  </span>
+                </label>
               ))}
-            </select>
-          </label>
+            </div>
+          </fieldset>
           <label className="flex flex-col gap-1.5 text-sm font-semibold">
             Email
             <input

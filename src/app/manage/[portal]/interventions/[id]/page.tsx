@@ -7,6 +7,7 @@ import { NewSessionDialog, type CopyOption } from "@/components/manage/NewSessio
 import { TypeSelect } from "@/components/manage/TypeSelect";
 import { PillarChip, StatusChip, TypeChip } from "@/components/manage/Chips";
 import { card } from "@/components/ui/styles";
+import { inPortal } from "@/lib/auth/portals";
 
 type SessionRow = {
   id: string;
@@ -18,15 +19,15 @@ type SessionRow = {
   entries: { count: number }[];
 };
 
-export default async function InterventionPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function InterventionPage({ params }: { params: Promise<{ portal: string; id: string }> }) {
+  const { portal, id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const { data: iv } = await supabase.from("interventions").select("id, name, pillar, type").eq("id", id).maybeSingle();
-  if (!iv || !user) notFound();
+  if (!iv || !user || !inPortal(portal, iv.pillar)) notFound();
 
   const { data: staff } = await supabase.from("staff_roles").select("role").eq("user_id", user.id).maybeSingle();
   const isAdmin = staff?.role === "admin";
@@ -70,7 +71,7 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
   return (
     <section>
       <nav className="flex flex-wrap gap-1.5 text-sm text-muted">
-        <Link href="/manage" className="text-accent hover:underline">Overview</Link>
+        <Link href={`/manage/${portal}`} className="text-accent hover:underline">Overview</Link>
         <span>/</span>
         <span>{iv.pillar}</span>
       </nav>
@@ -129,7 +130,7 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
                 return (
                   <tr key={s.id} className="border-t border-line hover:bg-sunk">
                     <td className="px-3 py-2">
-                      <Link href={`/manage/sessions/${s.id}/forms`} className="font-semibold text-accent hover:underline">
+                      <Link href={`/manage/${portal}/sessions/${s.id}/forms`} className="font-semibold text-accent hover:underline">
                         {s.title}
                       </Link>
                       {intakeCode && <div className="font-mono text-xs text-muted">{intakeCode}</div>}

@@ -15,7 +15,7 @@ const PILLAR_COLOR: Record<NavPillar["pillar"], string> = {
 
 function NavLink({ href, children, count }: { href: string; children: React.ReactNode; count?: number }) {
   const pathname = usePathname();
-  const active = href === "/manage" ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+  const active = pathname === href || pathname.startsWith(href + "/");
   return (
     <Link
       href={href}
@@ -31,12 +31,14 @@ function NavLink({ href, children, count }: { href: string; children: React.Reac
 }
 
 export function ManageNav({
+  portal,
   pillars,
   portalLabel,
   signOutAction,
   isAdmin,
   showStaffAccess,
 }: {
+  portal: string;
   pillars: NavPillar[];
   portalLabel: string;
   signOutAction: () => Promise<void>;
@@ -50,10 +52,10 @@ export function ManageNav({
         <div className="text-xs text-muted">Intervention manager · {portalLabel}</div>
       </div>
 
-      <NavLink href="/manage">Overview</NavLink>
-      <NavLink href="/manage/registry">Participant registry</NavLink>
-      <NavLink href="/manage/data">Data for the dashboard</NavLink>
-      {showStaffAccess && <NavLink href="/manage/staff">Staff access</NavLink>}
+      <NavLink href={`/manage/${portal}`}>Overview</NavLink>
+      <NavLink href={`/manage/${portal}/registry`}>Participant registry</NavLink>
+      <NavLink href={`/manage/${portal}/data`}>Data for the dashboard</NavLink>
+      {showStaffAccess && <NavLink href={`/manage/${portal}/staff`}>Staff access</NavLink>}
 
       {pillars.map(({ pillar, interventions }) => (
         <div key={pillar}>
@@ -62,7 +64,7 @@ export function ManageNav({
             {pillar}
           </div>
           {interventions.map((i) => (
-            <NavLink key={i.id} href={`/manage/interventions/${i.id}`} count={i.sessionCount}>
+            <NavLink key={i.id} href={`/manage/${portal}/interventions/${i.id}`} count={i.sessionCount}>
               <span
                 className={`inline-block h-2 w-2 flex-none rounded-full border-[1.5px] border-muted ${
                   i.type === "selective" ? "bg-muted" : ""

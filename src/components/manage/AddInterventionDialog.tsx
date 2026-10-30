@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { addIntervention } from "@/app/manage/actions";
 import { Dialog } from "@/components/ui/Dialog";
 import { btn, btnPri, input, label } from "@/components/ui/styles";
+import { usePortal } from "./usePortal";
 
 // Opened from the sidebar under each pillar. Admins only (the sidebar shows the link to admins).
 export function AddInterventionDialog({ pillar }: { pillar: string }) {
   const router = useRouter();
+  const portal = usePortal();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [type, setType] = useState<"open" | "selective">("open");
@@ -30,7 +32,7 @@ export function AddInterventionDialog({ pillar }: { pillar: string }) {
     setBusy(false);
     if (!r.ok) return setError(r.error);
     close();
-    router.push(`/manage/interventions/${r.data.id}`);
+    router.push(`/manage/${portal}/interventions/${r.data.id}`);
   };
 
   return (

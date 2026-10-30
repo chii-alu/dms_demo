@@ -4,9 +4,9 @@ import { todayIso } from "@/lib/dates";
 import { AttendanceView, type EligibleRow, type AttendanceRecord } from "@/components/manage/AttendanceView";
 import { requireTab } from "@/lib/sessions/guard";
 
-export default async function AttendancePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  await requireTab("attendance", id);
+export default async function AttendancePage({ params }: { params: Promise<{ portal: string; id: string }> }) {
+  const { portal, id } = await params;
+  await requireTab("attendance", id, portal);
   const supabase = await createClient();
 
   const { data: s } = await supabase

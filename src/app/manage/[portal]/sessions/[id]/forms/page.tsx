@@ -8,9 +8,9 @@ import { questionsSchema, type Question } from "@/lib/forms/questions";
 import { publicFields } from "@/lib/forms/fields";
 import { requireTab } from "@/lib/sessions/guard";
 
-export default async function SessionFormsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  await requireTab("forms", id);
+export default async function SessionFormsPage({ params }: { params: Promise<{ portal: string; id: string }> }) {
+  const { portal, id } = await params;
+  await requireTab("forms", id, portal);
   const supabase = await createClient();
 
   const { data: s } = await supabase.from("sessions").select("id, title, kind, dates").eq("id", id).maybeSingle();

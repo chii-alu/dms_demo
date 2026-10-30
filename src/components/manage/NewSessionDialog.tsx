@@ -6,6 +6,7 @@ import { createSession } from "@/app/manage/actions";
 import { Dialog } from "@/components/ui/Dialog";
 import { btnPri, input, label } from "@/components/ui/styles";
 import { SessionForm } from "./SessionForm";
+import { usePortal } from "./usePortal";
 
 export type CopyOption = { id: string; label: string };
 
@@ -23,6 +24,7 @@ export function NewSessionDialog({
   copyOptions: CopyOption[];
 }) {
   const router = useRouter();
+  const portal = usePortal();
   const [open, setOpen] = useState(false);
   const [copyFrom, setCopyFrom] = useState<string>(copyOptions[0]?.id ?? "");
   const close = useCallback(() => setOpen(false), []);
@@ -70,7 +72,7 @@ export function NewSessionDialog({
             });
             if (result.ok) {
               setOpen(false);
-              router.push(`/manage/sessions/${result.data.sessionId}/forms`);
+              router.push(`/manage/${portal}/sessions/${result.data.sessionId}/forms`);
             }
             return result.ok ? { ok: true, data: undefined } : result;
           }}

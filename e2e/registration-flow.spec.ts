@@ -24,7 +24,7 @@ test("register through the public form, then clean up", async ({ page }) => {
   await page.getByLabel(/Session title/).fill(title);
   await page.getByLabel(/Session dates/).fill("2099-06-01");
   await page.getByRole("button", { name: "Create session and forms" }).click();
-  await expect(page).toHaveURL(/\/manage\/sessions\/[0-9a-f-]+\/forms/);
+  await expect(page).toHaveURL(/\/manage\/[a-zA-Z]+\/sessions\/[0-9a-f-]+\/forms/);
   const sessionUrl = page.url().replace(/\/forms.*$/, "");
 
   // Open the registration form and read its code.
@@ -49,5 +49,5 @@ test("register through the public form, then clean up", async ({ page }) => {
   await page.goto(`${sessionUrl}/details`);
   await page.getByRole("button", { name: "Delete session" }).first().click();
   await page.getByRole("dialog").getByRole("button", { name: "Delete session" }).click();
-  await expect(page).toHaveURL(/\/manage\/interventions\//);
+  await expect(page).toHaveURL(/\/manage\/[a-zA-Z]+\/interventions\//);
 });

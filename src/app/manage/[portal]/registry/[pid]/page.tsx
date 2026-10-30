@@ -22,8 +22,8 @@ type Journey = {
   };
 };
 
-export default async function ParticipantPage({ params }: { params: Promise<{ pid: string }> }) {
-  const { pid } = await params;
+export default async function ParticipantPage({ params }: { params: Promise<{ portal: string; pid: string }> }) {
+  const { portal, pid } = await params;
   const supabase = await createClient();
 
   const { data: p } = await supabase
@@ -55,7 +55,7 @@ export default async function ParticipantPage({ params }: { params: Promise<{ pi
   return (
     <section className="flex flex-col gap-6">
       <div>
-        <Link href="/manage/registry" className="text-sm text-accent hover:underline">← Participant registry</Link>
+        <Link href={`/manage/${portal}/registry`} className="text-sm text-accent hover:underline">← Participant registry</Link>
         <h1 className="mt-2 font-display text-3xl font-semibold">{p.name}</h1>
         <p className="font-mono text-sm text-muted">
           {p.pid} · {p.email}
@@ -90,7 +90,7 @@ export default async function ParticipantPage({ params }: { params: Promise<{ pi
               const gaveFeedback = (feedback ?? []).some((f) => f.session_id === s.id);
               return (
                 <li key={s.id}>
-                  <Link href={`/manage/sessions/${s.id}/forms`} className={`${card} grid items-center gap-3 sm:grid-cols-[auto_1fr_auto]`}>
+                  <Link href={`/manage/${portal}/sessions/${s.id}/forms`} className={`${card} grid items-center gap-3 sm:grid-cols-[auto_1fr_auto]`}>
                     <PillarChip pillar={s.pillar} />
                     <span>
                       <span className="block font-semibold">{s.title}</span>

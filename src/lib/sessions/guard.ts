@@ -4,10 +4,10 @@ import { currentStaffRole } from "@/lib/auth/roles";
 import { fallbackTab, visibleTabs, type TabSlug } from "./tabs";
 
 // Sends a user who may not use this tab (a reviewer, for example) to the tab they can use (SPEC §8).
-export async function requireTab(slug: TabSlug, sessionId: string) {
+export async function requireTab(slug: TabSlug, sessionId: string, portal: string) {
   const supabase = await createClient();
   const role = await currentStaffRole(supabase);
   if (!visibleTabs(role).includes(slug)) {
-    redirect(`/manage/sessions/${sessionId}/${fallbackTab(role)}`);
+    redirect(`/manage/${portal}/sessions/${sessionId}/${fallbackTab(role)}`);
   }
 }

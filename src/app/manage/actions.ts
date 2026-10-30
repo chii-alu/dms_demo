@@ -111,7 +111,7 @@ export async function createSession(input: {
   });
   if (error || !sessionId) return fail(error ? explain(error) : "The session could not be created.");
 
-  revalidatePath(`/manage/interventions/${iv.id}`);
+  revalidatePath("/manage", "layout");
   revalidatePath("/manage", "layout");
   return { ok: true, data: { sessionId: sessionId as string } };
 }
@@ -140,8 +140,8 @@ export async function updateSession(sessionId: string, input: SessionInput): Pro
   if (error) return fail(explain(error));
   if (!data || data.length === 0) return fail("That session could not be updated.");
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
-  revalidatePath(`/manage/interventions/${data[0].intervention_id}`);
+  revalidatePath("/manage", "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -153,7 +153,7 @@ export async function deleteSession(sessionId: string): Promise<ActionResult<{ i
   if (error) return fail(explain(error));
   if (!data || data.length === 0) return fail("That session could not be deleted.");
 
-  revalidatePath(`/manage/interventions/${data[0].intervention_id}`);
+  revalidatePath("/manage", "layout");
   revalidatePath("/manage", "layout");
   return { ok: true, data: { interventionId: data[0].intervention_id } };
 }
@@ -178,7 +178,7 @@ export async function setFormStatus(
   if (error) return fail(explain(error));
   if (!data || data.length === 0) return fail("That form could not be updated.");
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -204,7 +204,7 @@ export async function saveFormQuestions(
   if (error) return fail(explain(error));
   if (!data || data.length === 0) return fail("That form could not be updated.");
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -218,7 +218,7 @@ export async function saveRubric(sessionId: string, criteria: unknown): Promise<
   const { error } = await supabase.rpc("replace_rubric", { p_session_id: sessionId, p_criteria: parsed.data });
   if (error) return fail(explain(error));
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -236,7 +236,7 @@ export async function setInterventionType(interventionId: string, type: string):
   if (error) return fail(explain(error));
   if (!data || data.length === 0) return fail("Only MELA admins can change an intervention's type.");
 
-  revalidatePath(`/manage/interventions/${interventionId}`);
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -259,7 +259,7 @@ export async function setEntryStatuses(sessionId: string, entryIds: string[], st
   });
   if (error) return fail(explain(error));
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: { updated: Number(data ?? 0) } };
 }
 
@@ -277,7 +277,7 @@ export async function saveEntryScores(entryId: string, scores: Record<string, nu
   const { error } = await supabase.rpc("save_scores", { p_entry_id: entryId, p_scores: parsed.data });
   if (error) return fail(explain(error));
 
-  revalidatePath("/manage/sessions", "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -290,7 +290,7 @@ export async function addEntryManually(sessionId: string, profile: Record<string
   const { data, error } = await supabase.rpc("staff_add_entry", { p_session_id: sessionId, p_profile: profile });
   if (error) return fail(explain(error));
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: data as { pid: string; status: string } };
 }
 
@@ -312,7 +312,7 @@ export async function setAttendance(sessionId: string, participantId: string, da
   });
   if (error) return fail(explain(error));
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -326,7 +326,7 @@ export async function markAllPresent(sessionId: string, date: string): Promise<A
   const { data, error } = await supabase.rpc("mark_all_present", { p_session_id: sessionId, p_date: d.data });
   if (error) return fail(explain(error));
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: { marked: Number(data ?? 0) } };
 }
 
@@ -341,7 +341,7 @@ export async function addWalkin(sessionId: string, date: string, profile: Record
   const { data, error } = await supabase.rpc("add_walkin", { p_session_id: sessionId, p_profile: profile, p_date: d.data });
   if (error) return fail(explain(error));
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: { pid: (data as { pid: string }).pid } };
 }
 
@@ -411,7 +411,7 @@ export async function anonymiseParticipant(pid: string): Promise<ActionResult> {
   const { error } = await supabase.rpc("anonymise_participant", { p_pid: pid });
   if (error) return fail(explain(error));
 
-  revalidatePath("/manage/registry", "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -427,7 +427,7 @@ export async function assignReviewer(sessionId: string, userId: string): Promise
     .insert({ session_id: sessionId, user_id: userId, assigned_by: me.user?.id ?? null });
   if (error) return fail(error.code === "23505" ? "This person is already a reviewer for this session." : explain(error));
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -445,7 +445,7 @@ export async function removeReviewer(sessionId: string, userId: string): Promise
   if (error) return fail(explain(error));
   if (!data || data.length === 0) return fail("That reviewer could not be removed.");
 
-  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -470,7 +470,7 @@ export async function setStaffRole(email: string, role: string, pillars: string[
   });
   if (error) return fail(explain(error));
 
-  revalidatePath("/manage/staff");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -482,7 +482,7 @@ export async function removeStaff(userId: string): Promise<ActionResult> {
   const { error } = await supabase.rpc("remove_staff", { p_user_id: userId });
   if (error) return fail(explain(error));
 
-  revalidatePath("/manage/staff");
+  revalidatePath("/manage", "layout");
   return { ok: true, data: undefined };
 }
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PillarChip } from "./Chips";
 import { input } from "@/components/ui/styles";
+import { usePortal } from "./usePortal";
 
 export type RegistryRow = {
   pid: string;
@@ -18,6 +19,7 @@ export type RegistryRow = {
 };
 
 export function RegistryTable({ rows }: { rows: RegistryRow[] }) {
+  const portal = usePortal();
   const [q, setQ] = useState("");
   const visible = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -58,7 +60,7 @@ export function RegistryTable({ rows }: { rows: RegistryRow[] }) {
                 <tr key={r.pid} className="border-t border-line hover:bg-sunk">
                   <td className="px-3 py-2 font-mono text-xs">{r.pid}</td>
                   <td className="px-3 py-2">
-                    <Link href={`/manage/registry/${r.pid}`} className="font-semibold text-accent hover:underline">
+                    <Link href={`/manage/${portal}/registry/${r.pid}`} className="font-semibold text-accent hover:underline">
                       {r.name}
                     </Link>
                   </td>

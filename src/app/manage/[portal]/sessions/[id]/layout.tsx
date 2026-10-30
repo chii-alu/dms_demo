@@ -7,15 +7,16 @@ import { PillarChip, StatusChip, TypeChip } from "@/components/manage/Chips";
 import { SessionTabs } from "@/components/manage/SessionTabs";
 import { currentStaffRole } from "@/lib/auth/roles";
 import { visibleTabs } from "@/lib/sessions/tabs";
+import { inPortal } from "@/lib/auth/portals";
 
 export default async function SessionLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ id: string }>;
+  params: Promise<{ portal: string; id: string }>;
 }) {
-  const { id } = await params;
+  const { portal, id } = await params;
   const supabase = await createClient();
   const role = await currentStaffRole(supabase);
   const { data: s } = await supabase
@@ -23,7 +24,7 @@ export default async function SessionLayout({
     .select("id, title, pillar, kind, dates, mode, venue, capacity, application_deadline, interventions(id, name)")
     .eq("id", id)
     .maybeSingle();
-  if (!s) notFound();
+  if (!s || !inPortal(portal, s.pillar)) notFound();
 
   // Pipeline numbers use the same definitions as v_session_summary (SPEC §3).
   const [{ data: entries }, { data: attendance }, { count: feedbackCount }] = await Promise.all([
@@ -63,11 +64,11 @@ export default async function SessionLayout({
   return (
     <section>
       <nav className="flex flex-wrap gap-1.5 text-sm text-muted">
-        <Link href="/manage" className="text-accent hover:underline">Overview</Link>
+        <Link href={`/manage/${portal}`} className="text-accent hover:underline">Overview</Link>
         <span>/</span>
         <span>{s.pillar}</span>
         <span>/</span>
-        <Link href={`/manage/interventions/${iv.id}`} className="text-accent hover:underline">{iv.name}</Link>
+        <Link href={`/manage/${portal}/interventions/${iv.id}`} className="text-accent hover:underline">{iv.name}</Link>
       </nav>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">

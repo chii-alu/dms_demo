@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { TabSlug } from "@/lib/sessions/tabs";
+import { usePortal } from "./usePortal";
 
 export function SessionTabs({ sessionId, selective, visible }: { sessionId: string; selective: boolean; visible: TabSlug[] }) {
   const pathname = usePathname();
+  const portal = usePortal();
   const all = [
     { slug: "forms", label: "Forms" },
     { slug: "people", label: selective ? "Applications and selection" : "Registrations" },
@@ -14,7 +16,7 @@ export function SessionTabs({ sessionId, selective, visible }: { sessionId: stri
     { slug: "details", label: "Session details" },
   ] as const;
   const tabs = all.filter((t) => visible.includes(t.slug));
-  const base = `/manage/sessions/${sessionId}`;
+  const base = `/manage/${portal}/sessions/${sessionId}`;
 
   return (
     <nav aria-label="Session sections" className="mt-6 flex gap-1 overflow-x-auto border-b border-line">

@@ -17,9 +17,9 @@ type FeedbackRow = {
   participants: { name: string } | null;
 };
 
-export default async function FeedbackPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  await requireTab("feedback", id);
+export default async function FeedbackPage({ params }: { params: Promise<{ portal: string; id: string }> }) {
+  const { portal, id } = await params;
+  await requireTab("feedback", id, portal);
   const supabase = await createClient();
 
   const { data: s } = await supabase.from("sessions").select("id").eq("id", id).maybeSingle();

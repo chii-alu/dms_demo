@@ -26,7 +26,7 @@ type EntryRow = {
   };
 };
 
-export default async function PeoplePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PeoplePage({ params }: { params: Promise<{ portal: string; id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
   const {

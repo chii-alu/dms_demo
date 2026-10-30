@@ -1,25 +1,25 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/redirect";
-import { PORTAL_COOKIE, canEnterPortal, isPortal } from "@/lib/auth/portals";
+import { canEnterPortal, isPortal, landingPath } from "@/lib/auth/portals";
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = safeNext(String(formData.get("next") ?? "/manage"));
   const portal = String(formData.get("portal") ?? "");
-
-  if (!isPortal(portal)) {
-    redirect(`/login?error=portal&next=${encodeURIComponent(next)}`);
-  }
+  // Only the page they were sent to is kept on errors. The chosen view must not stick to the next attempt.
+  const sentTo = String(formData.get("next") ?? "");
+  const back = (error: string) =>
+    `/login?error=${error}&portal=${encodeURIComponent(portal)}${sentTo ? `&next=${encodeURIComponent(sentTo)}` : ""}`;
+  if (!isPortal(portal)) redirect(`/login?error=choose${sentTo ? `&next=${encodeURIComponent(sentTo)}` : ""}`);
+  const next = safeNext(landingPath(portal, sentTo));
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    redirect(`/login?error=invalid&portal=${portal}&next=${encodeURIComponent(next)}`);
+    redirect(back("invalid"));
   }
 
   const {
@@ -32,23 +32,14 @@ export async function signIn(formData: FormData) {
 
   if (!canEnterPortal(portal, staff.role, staff.pillars ?? [])) {
     await supabase.auth.signOut();
-    redirect(`/login?error=portal&portal=${portal}&next=${encodeURIComponent(next)}`);
+    redirect(back("portal"));
   }
 
-  const jar = await cookies();
-  jar.set(PORTAL_COOKIE, portal, {
-    path: "/",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 30,
-  });
   redirect(next);
 }
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  (await cookies()).delete(PORTAL_COOKIE);
   redirect("/login");
 }

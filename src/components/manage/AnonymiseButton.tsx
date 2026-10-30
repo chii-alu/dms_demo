@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { anonymiseParticipant } from "@/app/manage/actions";
 import { Dialog } from "@/components/ui/Dialog";
 import { btn, btnDanger } from "@/components/ui/styles";
+import { usePortal } from "./usePortal";
 
 // SPEC §8: remove a participant's personal details on request. Counts and links are kept.
 export function AnonymiseButton({ pid, name }: { pid: string; name: string }) {
   const router = useRouter();
+  const portal = usePortal();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +21,7 @@ export function AnonymiseButton({ pid, name }: { pid: string; name: string }) {
     const r = await anonymiseParticipant(pid);
     setBusy(false);
     if (!r.ok) return setError(r.error);
-    router.push("/manage/registry");
+    router.push(`/manage/${portal}/registry`);
   };
 
   return (

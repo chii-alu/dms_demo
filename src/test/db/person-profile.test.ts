@@ -8,7 +8,6 @@ const REVIEWER = "00000000-0000-0000-0000-000000000010";
 let db: PGlite;
 let person: string;
 let hentCohort: string;
-let hecoCohort: string;
 
 beforeAll(async () => {
   db = await setupDb();
@@ -18,7 +17,6 @@ beforeAll(async () => {
   `);
   const iv = async (n: string) => (await db.query<{ id: string }>("select id from interventions where name = $1", [n])).rows[0].id;
   hentCohort = (await db.query<{ id: string }>("insert into cohort (intervention_id, label) values ($1, 'Profile HENT') returning id", [await iv("Masterclass")])).rows[0].id;
-  hecoCohort = (await db.query<{ id: string }>("insert into cohort (intervention_id, label) values ($1, 'Profile HECO') returning id", [await iv("Public Sector Fellowship")])).rows[0].id;
   const r = await db.query<{ r: { chii_id: string } }>(
     "select public.resolve_beneficiary('Profile Person', 'profile@example.org', null, 'P-77', 'student', '{\"gender\":\"Female\",\"residence_country\":\"Rwanda\"}'::jsonb) as r");
   person = r.rows[0].r.chii_id;

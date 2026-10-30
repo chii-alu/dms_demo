@@ -1,32 +1,43 @@
 import { describe, expect, it } from "vitest";
-import { canEnterPortal, isPortal, pillarsForPortal, resolvePortal } from "./portals";
+import { canEnterPortal, defaultPortal, inPortal, isPortal, landingPath, pillarsForPortal } from "./portals";
 
 describe("portals", () => {
   it("admins can enter every portal, pillar staff only their own pillar", () => {
     expect(canEnterPortal("admin", "admin", [])).toBe(true);
-    expect(canEnterPortal("HENT", "admin", [])).toBe(true);
-    expect(canEnterPortal("HENT", "pillar_staff", ["HENT"])).toBe(true);
-    expect(canEnterPortal("HECO", "pillar_staff", ["HENT"])).toBe(false);
+    expect(canEnterPortal("hent", "admin", [])).toBe(true);
+    expect(canEnterPortal("hent", "pillar_staff", ["HENT"])).toBe(true);
+    expect(canEnterPortal("heco", "pillar_staff", ["HENT"])).toBe(false);
     expect(canEnterPortal("admin", "pillar_staff", ["HENT"])).toBe(false);
-    expect(canEnterPortal("HENT", "reviewer", [])).toBe(false);
+    expect(canEnterPortal("hent", "reviewer", [])).toBe(false);
   });
 
   it("shows all pillars for the admin portal and one pillar otherwise", () => {
     expect(pillarsForPortal("admin")).toEqual(["HENT", "HEMP", "HECO"]);
-    expect(pillarsForPortal("HEMP")).toEqual(["HEMP"]);
+    expect(pillarsForPortal("hemp")).toEqual(["HEMP"]);
   });
 
-  it("uses the requested portal only when the person may enter it", () => {
-    expect(resolvePortal("HECO", "admin", [])).toBe("HECO");
-    expect(resolvePortal("HECO", "pillar_staff", ["HENT"])).toBe("HENT");
-    expect(resolvePortal(undefined, "admin", [])).toBe("admin");
-    expect(resolvePortal("admin", "pillar_staff", ["HEMP", "HENT"])).toBe("HENT");
-    expect(resolvePortal(undefined, "reviewer", [])).toBeNull();
+  it("keeps records in their own portal, and everything in the admin portal", () => {
+    expect(inPortal("admin", "HECO")).toBe(true);
+    expect(inPortal("hent", "HENT")).toBe(true);
+    expect(inPortal("hent", "HECO")).toBe(false);
+  });
+
+  it("lands admins in the admin portal and pillar staff in their first pillar", () => {
+    expect(defaultPortal("admin", [])).toBe("admin");
+    expect(defaultPortal("pillar_staff", ["HEMP", "HENT"])).toBe("hent");
+    expect(defaultPortal("reviewer", [])).toBeNull();
   });
 
   it("recognises only the four portals", () => {
-    expect(isPortal("HENT")).toBe(true);
+    expect(isPortal("hent")).toBe(true);
+    expect(isPortal("HENT")).toBe(false);
     expect(isPortal("EXECUTIVE")).toBe(false);
     expect(isPortal(undefined)).toBe(false);
+  });
+
+  it("lands people in the view they chose unless they were sent to a specific page", () => {
+    expect(landingPath("hent", "")).toBe("/manage/hent");
+    expect(landingPath("hent", "/manage")).toBe("/manage/hent");
+    expect(landingPath("hent", "/manage/hemp/registry")).toBe("/manage/hemp/registry");
   });
 });
