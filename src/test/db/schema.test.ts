@@ -17,10 +17,16 @@ const HENT_STAFF = "00000000-0000-0000-0000-00000000000b";
 
 let db: PGlite;
 
+// Typed loosely: these are assertion helpers over known test queries.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function query<T = any>(sql: string, params: unknown[] = []) {
+  return db.query<T>(sql, params);
+}
+
 async function asUser(uid: string, sql: string, params: unknown[] = []) {
   await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub', '${uid}', false)`);
   try {
-    return await db.query(sql, params);
+    return await query(sql, params);
   } finally {
     await db.exec("reset role; select set_config('request.jwt.claim.sub', '', false)");
   }
@@ -29,14 +35,14 @@ async function asUser(uid: string, sql: string, params: unknown[] = []) {
 async function asAnon(sql: string) {
   await db.exec("set role anon; select set_config('request.jwt.claim.sub', '', false)");
   try {
-    return await db.query(sql);
+    return await query(sql);
   } finally {
     await db.exec("reset role");
   }
 }
 
 async function interventionId(name: string) {
-  const r = await db.query<{ id: string }>("select id from interventions where name = $1", [name]);
+  const r = await query<{ id: string }>("select id from interventions where name = $1", [name]);
   return r.rows[0].id;
 }
 
@@ -102,28 +108,28 @@ beforeAll(async () => {
 
 describe("schema and RLS (SPEC §3, §8)", () => {
   it("seeds the 18 interventions", async () => {
-    const r = await db.query<{ n: number }>("select count(*)::int n from interventions");
+    const r = await query<{ n: number }>("select count(*)::int n from interventions");
     expect(r.rows[0].n).toBe(18);
   });
 
   it("generates participant IDs as MELA-0001, MELA-0002", async () => {
-    const r = await db.query<{ pid: string }>(
+    const r = await query<{ pid: string }>(
       "insert into participants (email, name) values ('a@x.org','A'),('b@x.org','B') returning pid",
     );
     expect(r.rows.map((x) => x.pid)).toEqual(["MELA-0001", "MELA-0002"]);
   });
 
   it("treats emails as case-insensitive (citext)", async () => {
-    await expect(db.query("insert into participants (email, name) values ('A@X.ORG','dup')")).rejects.toThrow();
+    await expect(query("insert into participants (email, name) values ('A@X.ORG','dup')")).rejects.toThrow();
   });
 
   it("writes status_history when an entry status changes", async () => {
-    const p = (await db.query<{ id: string }>("select id from participants limit 1")).rows[0].id;
+    const p = (await query<{ id: string }>("select id from participants limit 1")).rows[0].id;
     const sid = (await createSession(ADMIN, await interventionId("Ventures"))).rows[0].id;
     await db.exec(`insert into entries (session_id, participant_id, status) values ('${sid}', '${p}', 'applied')`);
     await db.exec(`set request.jwt.claim.sub = '${ADMIN}'`);
     await db.exec(`update entries set status = 'shortlisted' where participant_id = '${p}'`);
-    const h = await db.query<{ from_status: string; to_status: string; changed_by: string }>(
+    const h = await query<{ from_status: string; to_status: string; changed_by: string }>(
       "select from_status, to_status, changed_by from status_history",
     );
     expect(h.rows).toEqual([{ from_status: "applied", to_status: "shortlisted", changed_by: ADMIN }]);
@@ -149,7 +155,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
   it("a Masterclass creates three forms with unique codes and no rubric", async () => {
     const ivId = await interventionId("Masterclass");
     const sid = (await createSession(ADMIN, ivId)).rows[0].id;
-    const forms = await db.query<{ kind: string; code: string }>(
+    const forms = await query<{ kind: string; code: string }>(
       "select kind, code from forms where session_id = $1 order by kind",
       [sid],
     );
@@ -158,9 +164,9 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
     const codes = forms.rows.map((f) => f.code);
     expect(new Set(codes).size).toBe(3);
     expect(codes.every((c) => /^HENT-M-\d{3}-(REG|ATT|FBK)$/.test(c))).toBe(true);
-    const kind = await db.query<{ kind: string }>("select kind from sessions where id = $1", [sid]);
+    const kind = await query<{ kind: string }>("select kind from sessions where id = $1", [sid]);
     expect(kind.rows[0].kind).toBe("registration");
-    const rubric = await db.query("select 1 from rubric_criteria where session_id = $1", [sid]);
+    const rubric = await query("select 1 from rubric_criteria where session_id = $1", [sid]);
     expect(rubric.rows).toHaveLength(0);
   });
 
@@ -172,9 +178,9 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
       { name: "Potential for impact", weight: 40 },
     ];
     const sid = (await createSession(ADMIN, ivId, { rubric })).rows[0].id;
-    const intake = await db.query<{ code: string }>("select code from forms where session_id = $1 and kind = 'intake'", [sid]);
+    const intake = await query<{ code: string }>("select code from forms where session_id = $1 and kind = 'intake'", [sid]);
     expect(intake.rows[0].code).toMatch(/^HENT-V-\d{3}-APP$/);
-    const crit = await db.query<{ name: string; weight: number; position: number }>(
+    const crit = await query<{ name: string; weight: number; position: number }>(
       "select name, weight, position from rubric_criteria where session_id = $1 order by position",
       [sid],
     );
@@ -185,7 +191,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
     const ivId = await interventionId("Masterclass");
     const a = (await createSession(ADMIN, ivId)).rows[0].id;
     const b = (await createSession(ADMIN, ivId)).rows[0].id;
-    const codes = await db.query<{ code: string }>(
+    const codes = await query<{ code: string }>(
       "select code from forms where session_id in ($1, $2) and kind = 'intake'",
       [a, b],
     );
@@ -195,7 +201,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
   it("sorts and de-duplicates dates", async () => {
     const ivId = await interventionId("Masterclass");
     const sid = (await createSession(ADMIN, ivId, { dates: ["2026-11-02", "2026-11-01", "2026-11-02"] })).rows[0].id;
-    const r = await db.query<{ dates: string[] }>("select dates::text[] as dates from sessions where id = $1", [sid]);
+    const r = await query<{ dates: string[] }>("select dates::text[] as dates from sessions where id = $1", [sid]);
     expect(r.rows[0].dates).toEqual(["2026-11-01", "2026-11-02"]);
   });
 
@@ -214,7 +220,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
     const intake = [{ id: "q1", label: "Venture name", type: "text", required: false }];
     const feedback = [{ id: "q2", label: "Confidence", type: "rating", required: true }];
     const sid = (await createSession(ADMIN, ivId, { intake, feedback })).rows[0].id;
-    const r = await db.query<{ kind: string; questions: unknown }>(
+    const r = await query<{ kind: string; questions: unknown }>(
       "select kind, questions from forms where session_id = $1 order by kind",
       [sid],
     );
@@ -235,7 +241,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
   });
 
   it("the SQL initials function matches the TypeScript one for every intervention", async () => {
-    const rows = await db.query<{ name: string; sql: string }>(
+    const rows = await query<{ name: string; sql: string }>(
       "select name, public.intervention_initials(name) as sql from interventions",
     );
     expect(rows.rows.length).toBe(18);

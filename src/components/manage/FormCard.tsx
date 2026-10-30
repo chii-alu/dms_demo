@@ -107,7 +107,7 @@ export function FormCard({
         </button>
       </div>
 
-      {editable && kind !== "attendance" && (
+      {editable && (
         <QuestionEditor
           open={editOpen}
           onClose={() => setEditOpen(false)}
