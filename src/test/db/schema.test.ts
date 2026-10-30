@@ -151,6 +151,31 @@ describe("schema and RLS (SPEC §3, §8)", () => {
   });
 });
 
+describe("replace_rubric", () => {
+  it("replaces a selective session's criteria in one step", async () => {
+    const sid = (await createSession(ADMIN, await interventionId("Ventures"), { rubric: [{ name: "Old", weight: 100 }] })).rows[0].id;
+    await asUser(ADMIN, "select public.replace_rubric($1, $2::jsonb)", [
+      sid,
+      JSON.stringify([{ name: "Motivation", weight: 60 }, { name: "Impact", weight: 40 }]),
+    ]);
+    const r = await query<{ name: string; position: number }>(
+      "select name, position from rubric_criteria where session_id = $1 order by position",
+      [sid],
+    );
+    expect(r.rows).toEqual([
+      { name: "Motivation", position: 1 },
+      { name: "Impact", position: 2 },
+    ]);
+  });
+
+  it("refuses an open (registration) session", async () => {
+    const sid = (await createSession(ADMIN, await interventionId("Masterclass"))).rows[0].id;
+    await expect(
+      asUser(ADMIN, "select public.replace_rubric($1, '[]'::jsonb)", [sid]),
+    ).rejects.toThrow(/Only selective sessions/);
+  });
+});
+
 describe("create_session (SPEC §4.2–4.4, §11)", () => {
   it("a Masterclass creates three forms with unique codes and no rubric", async () => {
     const ivId = await interventionId("Masterclass");
