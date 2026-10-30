@@ -1,9 +1,9 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ManageNav, type NavPillar } from "@/components/manage/ManageNav";
 import { signOut } from "@/app/login/actions";
-
-const PILLAR_ORDER = ["HENT", "HEMP", "HECO"] as const;
+import { PORTAL_COOKIE, PORTAL_LABEL, pillarsForPortal, resolvePortal } from "@/lib/auth/portals";
 
 // Defence in depth: the proxy already checked the session. Here we check the
 // staff role, and RLS limits what each query can return.
@@ -14,9 +14,15 @@ export default async function ManageLayout({ children }: { children: React.React
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: staff } = await supabase.from("staff_roles").select("role").eq("user_id", user.id).maybeSingle();
+  const { data: staff } = await supabase.from("staff_roles").select("role, pillars").eq("user_id", user.id).maybeSingle();
   if (!staff) redirect("/login?error=no-access");
+
+  // The portal chosen at sign-in, re-checked against the role on every request.
+  const requested = (await cookies()).get(PORTAL_COOKIE)?.value;
+  const portal = resolvePortal(requested, staff.role, staff.pillars ?? []);
+  if (!portal) redirect("/login?error=no-access");
   const isAdmin = staff.role === "admin";
+  const shownPillars = pillarsForPortal(portal);
 
   const { data: rows, error } = await supabase
     .from("interventions")
@@ -25,7 +31,7 @@ export default async function ManageLayout({ children }: { children: React.React
     .order("name");
   if (error) throw new Error(`Could not load interventions: ${error.message}`);
 
-  const pillars: NavPillar[] = PILLAR_ORDER.map((pillar) => ({
+  const pillars: NavPillar[] = shownPillars.map((pillar) => ({
     pillar,
     interventions: (rows ?? [])
       .filter((r) => r.pillar === pillar)
@@ -40,7 +46,13 @@ export default async function ManageLayout({ children }: { children: React.React
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-[270px_1fr]">
       <aside className="border-b border-line bg-surface p-3 md:sticky md:top-0 md:h-screen md:overflow-y-auto md:border-b-0 md:border-r">
-        <ManageNav pillars={pillars} signOutAction={signOut} isAdmin={isAdmin} />
+        <ManageNav
+          pillars={pillars}
+          portalLabel={PORTAL_LABEL[portal]}
+          signOutAction={signOut}
+          isAdmin={isAdmin}
+          showStaffAccess={isAdmin && portal === "admin"}
+        />
       </aside>
       <main className="min-w-0 px-6 py-6 md:px-8">{children}</main>
     </div>

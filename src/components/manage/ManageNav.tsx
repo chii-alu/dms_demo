@@ -32,24 +32,28 @@ function NavLink({ href, children, count }: { href: string; children: React.Reac
 
 export function ManageNav({
   pillars,
+  portalLabel,
   signOutAction,
   isAdmin,
+  showStaffAccess,
 }: {
   pillars: NavPillar[];
+  portalLabel: string;
   signOutAction: () => Promise<void>;
   isAdmin: boolean;
+  showStaffAccess: boolean;
 }) {
   return (
     <nav aria-label="Pillars and interventions" className="flex h-full flex-col">
       <div className="px-2.5 pb-4 pt-1">
         <div className="font-display text-xl font-semibold">MELA</div>
-        <div className="text-xs text-muted">Intervention manager</div>
+        <div className="text-xs text-muted">Intervention manager · {portalLabel}</div>
       </div>
 
       <NavLink href="/manage">Overview</NavLink>
       <NavLink href="/manage/registry">Participant registry</NavLink>
       <NavLink href="/manage/data">Data for the dashboard</NavLink>
-      {isAdmin && <NavLink href="/manage/staff">Staff access</NavLink>}
+      {showStaffAccess && <NavLink href="/manage/staff">Staff access</NavLink>}
 
       {pillars.map(({ pillar, interventions }) => (
         <div key={pillar}>
