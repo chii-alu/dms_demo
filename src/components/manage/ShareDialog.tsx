@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { QRCodeCanvas, QRCodeSVG } from "qrcode.react";
 import { Dialog } from "@/components/ui/Dialog";
 import { btn, btnSm, input } from "@/components/ui/styles";
@@ -21,14 +21,11 @@ export function ShareDialog({
   description: string;
   status: "draft" | "open" | "closed";
 }) {
-  const [origin, setOrigin] = useState("");
+  // Only read in the browser: the dialog renders nothing on the server while closed.
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
   const svgHost = useRef<HTMLDivElement>(null);
   const canvasHost = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
 
   const url = `${origin}/f/${code}`;
 
