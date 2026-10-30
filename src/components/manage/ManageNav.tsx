@@ -4,8 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AddInterventionDialog } from "./AddInterventionDialog";
 
-export type NavIntervention = { id: string; name: string; type: "open" | "selective"; sessionCount: number };
-export type NavPillar = { pillar: "HENT" | "HEMP" | "HECO"; interventions: NavIntervention[] };
+export type NavIntervention = {
+  id: string;
+  name: string;
+  type: "open" | "selective";
+  sessionCount: number;
+};
+export type NavPillar = {
+  pillar: "HENT" | "HEMP" | "HECO";
+  interventions: NavIntervention[];
+};
 
 const PILLAR_COLOR: Record<NavPillar["pillar"], string> = {
   HENT: "var(--hent)",
@@ -13,7 +21,15 @@ const PILLAR_COLOR: Record<NavPillar["pillar"], string> = {
   HECO: "var(--heco)",
 };
 
-function NavLink({ href, children, count }: { href: string; children: React.ReactNode; count?: number }) {
+function NavLink({
+  href,
+  children,
+  count,
+}: {
+  href: string;
+  children: React.ReactNode;
+  count?: number;
+}) {
   const pathname = usePathname();
   const active = pathname === href || pathname.startsWith(href + "/");
   return (
@@ -25,8 +41,36 @@ function NavLink({ href, children, count }: { href: string; children: React.Reac
       }`}
     >
       {children}
-      {count !== undefined && <span className="ml-auto text-xs tabular-nums text-muted">{count || ""}</span>}
+      {count !== undefined && (
+        <span className="ml-auto text-xs tabular-nums text-muted">
+          {count || ""}
+        </span>
+      )}
     </Link>
+  );
+}
+
+// A sidebar heading that folds its links away. Used for every group heading.
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details open className="group">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted hover:text-ink [&::-webkit-details-marker]:hidden">
+        {title}
+        <span
+          aria-hidden
+          className="ml-auto text-sm transition-transform group-open:rotate-90"
+        >
+          ›
+        </span>
+      </summary>
+      {children}
+    </details>
   );
 }
 
@@ -47,81 +91,112 @@ export function ManageNav({
   isAdmin: boolean;
   showStaffAccess: boolean;
 }) {
+  const records = (
+    <>
+      <NavLink href={`/manage/${portal}`}>Overview</NavLink>
+      <NavLink href={`/manage/${portal}/registry`}>
+        Participant registry
+      </NavLink>
+      <NavLink href={`/manage/${portal}/feedback-registry`}>
+        Feedback registry
+      </NavLink>
+      <NavLink href={`/manage/${portal}/data`}>Data for the dashboard</NavLink>
+    </>
+  );
+
   return (
-    <nav aria-label="Pillars and interventions" className="flex h-full flex-col">
+    <nav
+      aria-label="Pillars and interventions"
+      className="flex h-full flex-col"
+    >
       <div className="px-2.5 pb-4 pt-1">
         <div className="font-display text-xl font-semibold">{heading}</div>
         {subtitle && <div className="text-xs text-muted">{subtitle}</div>}
       </div>
 
-      {portal === "admin" && (
-        <div className="px-2.5 pb-1.5 text-xs font-semibold tracking-wider text-muted">OVERVIEW AND RECORDS</div>
+      {portal === "admin" ? (
+        <Section title="OVERVIEW AND RECORDS">{records}</Section>
+      ) : (
+        records
       )}
-      <NavLink href={`/manage/${portal}`}>Overview</NavLink>
-      <NavLink href={`/manage/${portal}/registry`}>Participant registry</NavLink>
-      <NavLink href={`/manage/${portal}/feedback-registry`}>Feedback registry</NavLink>
-      <NavLink href={`/manage/${portal}/data`}>Data for the dashboard</NavLink>
 
-      <div className="px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted">PILLAR TRACKER</div>
+      <Section title="PILLAR TRACKER">
+        {pillars.map(({ pillar, interventions }) => {
+          const body = (
+            <>
+              {interventions.map((i) => (
+                <NavLink
+                  key={i.id}
+                  href={`/manage/${portal}/interventions/${i.id}`}
+                  count={i.sessionCount}
+                >
+                  <span
+                    className={`inline-block h-2 w-2 flex-none rounded-full border-[1.5px] border-muted ${
+                      i.type === "selective" ? "bg-muted" : ""
+                    }`}
+                    title={i.type}
+                  />
+                  {i.name}
+                </NavLink>
+              ))}
+              {isAdmin && <AddInterventionDialog pillar={pillar} />}
+            </>
+          );
+          const colour = (
+            <span
+              className="h-3.5 w-1 rounded-sm"
+              style={{ background: PILLAR_COLOR[pillar] }}
+            />
+          );
 
-      {pillars.map(({ pillar, interventions }) => {
-        const body = (
-          <>
-            {interventions.map((i) => (
-              <NavLink key={i.id} href={`/manage/${portal}/interventions/${i.id}`} count={i.sessionCount}>
-                <span
-                  className={`inline-block h-2 w-2 flex-none rounded-full border-[1.5px] border-muted ${
-                    i.type === "selective" ? "bg-muted" : ""
-                  }`}
-                  title={i.type}
-                />
-                {i.name}
-              </NavLink>
-            ))}
-            {isAdmin && <AddInterventionDialog pillar={pillar} />}
-          </>
-        );
-        const colour = <span className="h-3.5 w-1 rounded-sm" style={{ background: PILLAR_COLOR[pillar] }} />;
-
-        // The admin view can fold each pillar's interventions away. Pillar views always show them.
-        if (portal !== "admin") {
+          // The admin view can fold each pillar's interventions away. Pillar views always show them.
+          if (portal !== "admin") {
+            return (
+              <div key={pillar}>
+                <div className="flex items-center gap-2 px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted">
+                  {colour}
+                  {pillar}
+                </div>
+                {body}
+              </div>
+            );
+          }
           return (
-            <div key={pillar}>
-              <div className="flex items-center gap-2 px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted">
+            <details key={pillar} open className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted hover:text-ink [&::-webkit-details-marker]:hidden">
                 {colour}
                 {pillar}
-              </div>
+                <span
+                  aria-hidden
+                  className="ml-auto text-sm transition-transform group-open:rotate-90"
+                >
+                  ›
+                </span>
+              </summary>
               {body}
-            </div>
+            </details>
           );
-        }
-        return (
-          <details key={pillar} open className="group">
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted hover:text-ink [&::-webkit-details-marker]:hidden">
-              {colour}
-              {pillar}
-              <span aria-hidden className="ml-auto text-sm transition-transform group-open:rotate-90">
-                ›
-              </span>
-            </summary>
-            {body}
-          </details>
-        );
-      })}
+        })}
+      </Section>
 
       {showStaffAccess && (
-        <>
-          <div className="px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted">ACCESS MANAGEMENT</div>
+        <Section title="ACCESS MANAGEMENT">
           <NavLink href={`/manage/${portal}/staff`}>Staff access</NavLink>
-        </>
+        </Section>
       )}
 
       <div className="mt-auto border-t border-line pt-4 text-sm">
-        <Link href="/dashboard" className="block px-2.5 py-1.5 text-accent hover:underline">
+        <Link
+          href="/dashboard"
+          className="block px-2.5 py-1.5 text-accent hover:underline"
+        >
           Dashboard
         </Link>
         <form action={signOutAction}>
-          <button type="submit" className="px-2.5 py-1.5 text-muted hover:text-ink">
+          <button
+            type="submit"
+            className="px-2.5 py-1.5 text-muted hover:text-ink"
+          >
             Sign out
           </button>
         </form>
