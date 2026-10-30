@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { todayIso, formatDateRange } from "@/lib/dates";
 import { sessionStatus } from "@/lib/rules/session-status";
-import { formCode as _unused } from "@/lib/rules/initials";
 import { NewSessionDialog, type CopyOption } from "@/components/manage/NewSessionDialog";
 import { TypeSelect } from "@/components/manage/TypeSelect";
 import { PillarChip, StatusChip, TypeChip } from "@/components/manage/Chips";
@@ -41,10 +40,16 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
   const sessions = (rows ?? []) as unknown as SessionRow[];
 
   const today = todayIso();
-  const sorted = [...sessions].sort((a, b) => [...b.dates].sort()[0]?.localeCompare([...a.dates].sort()[0] ?? "") ?? 0);
+  const firstDate = (s: SessionRow) => [...s.dates].sort()[0] ?? "";
+  const sorted = [...sessions].sort((a, b) => firstDate(b).localeCompare(firstDate(a)));
   const selective = iv.type === "selective";
   const registrations = sessions.reduce((n, s) => n + (s.entries[0]?.count ?? 0), 0);
   const upcoming = sessions.filter((s) => sessionStatus(s.dates, today) === "Upcoming").length;
+
+  const { count: feedbackCount } = await supabase
+    .from("feedback")
+    .select("id", { count: "exact", head: true })
+    .in("session_id", sessions.map((s) => s.id));
 
   const copyOptions: CopyOption[] = sorted.map((s) => ({
     id: s.id,
@@ -80,7 +85,7 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
         <Kpi value={sessions.length} label="sessions" />
         <Kpi value={registrations} label={selective ? "applications" : "registrations"} />
         <Kpi value={upcoming} label="upcoming" />
-        <Kpi value="—" label="feedback responses (milestone 5)" />
+        <Kpi value={feedbackCount ?? 0} label="feedback responses" />
       </div>
 
       <h2 className="mt-8 font-display text-xl font-semibold">Sessions</h2>
