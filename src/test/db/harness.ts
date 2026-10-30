@@ -14,7 +14,7 @@ export async function setupDb() {
   const db = await PGlite.create({ extensions: { citext } });
   await db.exec(`
     create schema auth;
-    create table auth.users (id uuid primary key);
+    create table auth.users (id uuid primary key, email text);
     create function auth.uid() returns uuid language sql stable as $$
       select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
     create role anon nologin;
@@ -35,7 +35,7 @@ export async function setupDb() {
   }
   await db.exec(readFileSync(path.join(ROOT, "supabase/seed.sql"), "utf8"));
   await db.exec(`
-    insert into auth.users values ('${ADMIN}'), ('${HENT_STAFF}');
+    insert into auth.users (id, email) values ('${ADMIN}', 'admin@mela.test'), ('${HENT_STAFF}', 'hent@mela.test');
     insert into staff_roles (user_id, role, pillars) values
       ('${ADMIN}', 'admin', '{}'), ('${HENT_STAFF}', 'pillar_staff', '{HENT}');
   `);

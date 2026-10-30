@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { setFormStatus } from "@/app/manage/actions";
 import { btnSm, card, input } from "@/components/ui/styles";
-import type { FieldSpec as CoreQuestion } from "@/lib/forms/fields";
+import type { FieldSpec as CoreQuestion, FieldSpec } from "@/lib/forms/fields";
 import type { Question } from "@/lib/forms/questions";
 import { QuestionEditor } from "./QuestionEditor";
 import { ShareDialog } from "./ShareDialog";
+import { PreviewDialog } from "./PreviewDialog";
 
 export const FORM_STATUS_LABEL = { draft: "Draft", open: "Open", closed: "Closed" } as const;
 const STATUS_CLASS = { draft: "bg-sunk text-muted", open: "bg-ok-soft text-ok", closed: "bg-bad-soft text-bad" } as const;
@@ -27,6 +28,7 @@ export function FormCard({
   countLabel,
   customQuestions,
   core,
+  previewFields,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -39,12 +41,14 @@ export function FormCard({
   countLabel: string;
   customQuestions?: Question[];
   core?: CoreQuestion[];
+  previewFields: FieldSpec[];
 }) {
   const router = useRouter();
   const [current, setCurrent] = useState<FormStatus>(status);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const editable = kind !== "attendance";
 
   const changeStatus = async (next: FormStatus) => {
@@ -102,6 +106,9 @@ export function FormCard({
             Edit questions
           </button>
         )}
+        <button type="button" className={btnSm} onClick={() => setPreviewOpen(true)}>
+          Preview and test
+        </button>
         <button type="button" className={btnSm} onClick={() => setShareOpen(true)}>
           Share link / QR
         </button>
@@ -119,6 +126,13 @@ export function FormCard({
           initial={customQuestions ?? []}
         />
       )}
+      <PreviewDialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={title}
+        description={sessionTitle}
+        fields={previewFields}
+      />
       <ShareDialog
         open={shareOpen}
         onClose={() => setShareOpen(false)}

@@ -32,9 +32,15 @@ function fromDbError(e: { code?: string; message: string }) {
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
 
+  const supabase = createPublicClient();
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!allowRequest(`${ip}:${code}`, LIMIT_PER_MINUTE)) {
-    return error(429, "Too many attempts. Wait a minute and try again.");
+  try {
+    if (!(await allowRequest(supabase, `${ip}:${code}`, LIMIT_PER_MINUTE))) {
+      return error(429, "Too many attempts. Wait a minute and try again.");
+    }
+  } catch (e) {
+    console.error("rate limiter unavailable", e);
+    return error(503, "The form is busy right now. Please try again in a moment.");
   }
 
   const raw = await request.text();
@@ -51,7 +57,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ ok: true, data: { pid: null, status: "registered", returning: false } });
   }
 
-  const supabase = createPublicClient();
   const { data: form, error: formError } = await supabase.rpc("get_public_form", { p_code: code });
   if (formError) return fromDbError(formError);
   if (!form) return error(404, "This form does not exist.");

@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { TabSlug } from "@/lib/sessions/tabs";
 
-export function SessionTabs({ sessionId, selective }: { sessionId: string; selective: boolean }) {
+export function SessionTabs({ sessionId, selective, visible }: { sessionId: string; selective: boolean; visible: TabSlug[] }) {
   const pathname = usePathname();
-  const tabs = [
+  const all = [
     { slug: "forms", label: "Forms" },
     { slug: "people", label: selective ? "Applications and selection" : "Registrations" },
     { slug: "attendance", label: "Attendance" },
     { slug: "feedback", label: "Feedback" },
     { slug: "details", label: "Session details" },
-  ];
+  ] as const;
+  const tabs = all.filter((t) => visible.includes(t.slug));
   const base = `/manage/sessions/${sessionId}`;
 
   return (

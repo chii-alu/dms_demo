@@ -4,6 +4,7 @@ import { questionsSchema } from "@/lib/forms/questions";
 import { average, netPromoterScore } from "@/lib/rules/feedback";
 import { card } from "@/components/ui/styles";
 import { formatDate } from "@/lib/dates";
+import { requireTab } from "@/lib/sessions/guard";
 
 type FeedbackRow = {
   satisfaction: number;
@@ -18,6 +19,7 @@ type FeedbackRow = {
 
 export default async function FeedbackPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await requireTab("feedback", id);
   const supabase = await createClient();
 
   const { data: s } = await supabase.from("sessions").select("id").eq("id", id).maybeSingle();

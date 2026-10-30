@@ -414,3 +414,103 @@ export async function anonymiseParticipant(pid: string): Promise<ActionResult> {
   revalidatePath("/manage/registry", "layout");
   return { ok: true, data: undefined };
 }
+
+// Reviewers (SPEC §8): pillar staff and admins assign reviewers to a selective session.
+export async function assignReviewer(sessionId: string, userId: string): Promise<ActionResult> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+  if (!uuidSchema.safeParse(sessionId).success || !uuidSchema.safeParse(userId).success) return fail("Unknown session or person.");
+
+  const { data: me } = await supabase.auth.getUser();
+  const { error } = await supabase
+    .from("session_reviewers")
+    .insert({ session_id: sessionId, user_id: userId, assigned_by: me.user?.id ?? null });
+  if (error) return fail(error.code === "23505" ? "This person is already a reviewer for this session." : explain(error));
+
+  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  return { ok: true, data: undefined };
+}
+
+export async function removeReviewer(sessionId: string, userId: string): Promise<ActionResult> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+  if (!uuidSchema.safeParse(sessionId).success || !uuidSchema.safeParse(userId).success) return fail("Unknown session or person.");
+
+  const { data, error } = await supabase
+    .from("session_reviewers")
+    .delete()
+    .eq("session_id", sessionId)
+    .eq("user_id", userId)
+    .select("user_id");
+  if (error) return fail(explain(error));
+  if (!data || data.length === 0) return fail("That reviewer could not be removed.");
+
+  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  return { ok: true, data: undefined };
+}
+
+// Admin: grant or change a staff role for an existing account (SPEC §8).
+export async function setStaffRole(email: string, role: string, pillars: string[]): Promise<ActionResult> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+
+  const parsed = z
+    .object({
+      email: z.string().trim().email("Enter a valid email address.").max(254),
+      role: z.enum(["admin", "pillar_lead", "pillar_staff", "reviewer"]),
+      pillars: z.array(z.enum(["HENT", "HEMP", "HECO"])),
+    })
+    .safeParse({ email, role, pillars });
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+
+  const { error } = await supabase.rpc("set_staff_role", {
+    p_email: parsed.data.email,
+    p_role: parsed.data.role,
+    p_pillars: parsed.data.pillars,
+  });
+  if (error) return fail(explain(error));
+
+  revalidatePath("/manage/staff");
+  return { ok: true, data: undefined };
+}
+
+export async function removeStaff(userId: string): Promise<ActionResult> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+  if (!uuidSchema.safeParse(userId).success) return fail("Unknown account.");
+
+  const { error } = await supabase.rpc("remove_staff", { p_user_id: userId });
+  if (error) return fail(explain(error));
+
+  revalidatePath("/manage/staff");
+  return { ok: true, data: undefined };
+}
+
+// Admin: add an intervention to a pillar (SPEC §7 "+ Add intervention"). The database allows only admins to write.
+export async function addIntervention(pillar: string, name: string, type: string): Promise<ActionResult<{ id: string }>> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+
+  const parsed = z
+    .object({
+      pillar: z.enum(["HENT", "HEMP", "HECO"]),
+      name: z.string().trim().min(2, "Give the intervention a name.").max(120),
+      type: z.enum(["open", "selective"]),
+    })
+    .safeParse({ pillar, name, type });
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+
+  const { data, error } = await supabase
+    .from("interventions")
+    .insert({ pillar: parsed.data.pillar, name: parsed.data.name, type: parsed.data.type })
+    .select("id")
+    .single();
+  if (error) {
+    if (error.code === "23505") return fail(`${parsed.data.name} already exists in ${parsed.data.pillar}.`);
+    if (error.code === "42501" || /row-level security/i.test(error.message)) return fail("Only MELA admins can add interventions.");
+    return fail(explain(error));
+  }
+
+  revalidatePath("/manage", "layout");
+  return { ok: true, data: { id: data.id } };
+}

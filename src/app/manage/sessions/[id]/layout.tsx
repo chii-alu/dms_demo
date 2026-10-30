@@ -5,6 +5,8 @@ import { formatDateRange, todayIso } from "@/lib/dates";
 import { sessionStatus } from "@/lib/rules/session-status";
 import { PillarChip, StatusChip, TypeChip } from "@/components/manage/Chips";
 import { SessionTabs } from "@/components/manage/SessionTabs";
+import { currentStaffRole } from "@/lib/auth/roles";
+import { visibleTabs } from "@/lib/sessions/tabs";
 
 export default async function SessionLayout({
   children,
@@ -15,6 +17,7 @@ export default async function SessionLayout({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const role = await currentStaffRole(supabase);
   const { data: s } = await supabase
     .from("sessions")
     .select("id, title, pillar, kind, dates, mode, venue, capacity, application_deadline, interventions(id, name)")
@@ -85,7 +88,7 @@ export default async function SessionLayout({
         ))}
       </div>
 
-      <SessionTabs sessionId={s.id} selective={selective} />
+      <SessionTabs sessionId={s.id} selective={selective} visible={visibleTabs(role)} />
       <div className="mt-6">{children}</div>
     </section>
   );

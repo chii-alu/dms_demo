@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AddInterventionDialog } from "./AddInterventionDialog";
 
 export type NavIntervention = { id: string; name: string; type: "open" | "selective"; sessionCount: number };
 export type NavPillar = { pillar: "HENT" | "HEMP" | "HECO"; interventions: NavIntervention[] };
@@ -29,7 +30,15 @@ function NavLink({ href, children, count }: { href: string; children: React.Reac
   );
 }
 
-export function ManageNav({ pillars, signOutAction }: { pillars: NavPillar[]; signOutAction: () => Promise<void> }) {
+export function ManageNav({
+  pillars,
+  signOutAction,
+  isAdmin,
+}: {
+  pillars: NavPillar[];
+  signOutAction: () => Promise<void>;
+  isAdmin: boolean;
+}) {
   return (
     <nav aria-label="Pillars and interventions" className="flex h-full flex-col">
       <div className="px-2.5 pb-4 pt-1">
@@ -40,6 +49,7 @@ export function ManageNav({ pillars, signOutAction }: { pillars: NavPillar[]; si
       <NavLink href="/manage">Overview</NavLink>
       <NavLink href="/manage/registry">Participant registry</NavLink>
       <NavLink href="/manage/data">Data for the dashboard</NavLink>
+      {isAdmin && <NavLink href="/manage/staff">Staff access</NavLink>}
 
       {pillars.map(({ pillar, interventions }) => (
         <div key={pillar}>
@@ -58,6 +68,7 @@ export function ManageNav({ pillars, signOutAction }: { pillars: NavPillar[]; si
               {i.name}
             </NavLink>
           ))}
+          {isAdmin && <AddInterventionDialog pillar={pillar} />}
         </div>
       ))}
 

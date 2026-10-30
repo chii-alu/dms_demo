@@ -16,6 +16,7 @@ export default async function ManageLayout({ children }: { children: React.React
 
   const { data: staff } = await supabase.from("staff_roles").select("role").eq("user_id", user.id).maybeSingle();
   if (!staff) redirect("/login?error=no-access");
+  const isAdmin = staff.role === "admin";
 
   const { data: rows, error } = await supabase
     .from("interventions")
@@ -39,7 +40,7 @@ export default async function ManageLayout({ children }: { children: React.React
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-[270px_1fr]">
       <aside className="border-b border-line bg-surface p-3 md:sticky md:top-0 md:h-screen md:overflow-y-auto md:border-b-0 md:border-r">
-        <ManageNav pillars={pillars} signOutAction={signOut} />
+        <ManageNav pillars={pillars} signOutAction={signOut} isAdmin={isAdmin} />
       </aside>
       <main className="min-w-0 px-6 py-6 md:px-8">{children}</main>
     </div>

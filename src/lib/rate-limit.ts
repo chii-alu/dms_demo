@@ -1,15 +1,14 @@
-// Fixed-window limiter, kept in memory for this server instance. Good enough for dev and
-// a single instance. Before launch, move this to shared storage (Upstash or Vercel KV) so the
-// limit holds across instances (SPEC §8).
-const WINDOW_MS = 60_000;
-const hits = new Map<string, { start: number; count: number }>();
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-export function allowRequest(key: string, limit: number, now = Date.now()) {
-  const entry = hits.get(key);
-  if (!entry || now - entry.start >= WINDOW_MS) {
-    hits.set(key, { start: now, count: 1 });
-    return true;
-  }
-  entry.count += 1;
-  return entry.count <= limit;
+// Shared across server instances: counts live in Postgres (migration 20261030180000).
+// Returns true while the caller is within `limit` hits per `windowSeconds`.
+// Throws if the database cannot answer, so callers can refuse rather than let requests through unchecked.
+export async function allowRequest(supabase: SupabaseClient, key: string, limit: number, windowSeconds = 60) {
+  const { data, error } = await supabase.rpc("consume_rate_limit", {
+    p_key: key,
+    p_limit: limit,
+    p_window_seconds: windowSeconds,
+  });
+  if (error) throw new Error(`rate limit check failed: ${error.message}`);
+  return data === true;
 }
