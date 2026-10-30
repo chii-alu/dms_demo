@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { markAllPresent, setAttendance } from "@/app/manage/actions";
-import { btnPri, btnSm, card } from "@/components/ui/styles";
+import { btnSm, card } from "@/components/ui/styles";
 import { formatDate } from "@/lib/dates";
 import { isCompleted } from "@/lib/rules/completion";
 import { ShareDialog } from "./ShareDialog";
@@ -187,7 +187,6 @@ export function AttendanceView({
         dates={dates}
         walkInDate={day}
       />
-      <span className="hidden">{btnPri}</span>
     </div>
   );
 }

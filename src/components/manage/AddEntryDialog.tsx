@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addEntryManually } from "@/app/manage/actions";
+import { addEntryManually, addWalkin } from "@/app/manage/actions";
 import { DynamicForm, type FieldValues } from "@/components/forms/DynamicForm";
 import { Dialog } from "@/components/ui/Dialog";
 import { btn, btnPri } from "@/components/ui/styles";
@@ -18,6 +18,7 @@ export function AddEntryDialog({
   selective,
   questions,
   dates,
+  walkInDate,
 }: {
   open: boolean;
   onClose: () => void;
@@ -25,21 +26,42 @@ export function AddEntryDialog({
   selective: boolean;
   questions: Question[];
   dates: string[];
+  // Set for a walk-in at an open session: the person is checked in on this date (SPEC §4.11).
+  walkInDate?: string;
 }) {
+  const walkIn = walkInDate !== undefined;
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title={selective ? "Add application manually" : "Add registration manually"}
-      description="Use this when someone registers on paper, by phone or in person. The participant must consent."
+      title={walkIn ? "Add walk-in" : selective ? "Add application manually" : "Add registration manually"}
+      description={
+        walkIn
+          ? "Registers the person and marks them present on the chosen date. Walk-ins are not limited by capacity."
+          : "Use this when someone registers on paper, by phone or in person. The participant must consent."
+      }
       wide
     >
-      {open && <AddEntryBody sessionId={sessionId} questions={questions} dates={dates} onClose={onClose} />}
+      {open && (
+        <AddEntryBody sessionId={sessionId} questions={questions} dates={dates} onClose={onClose} walkInDate={walkInDate} />
+      )}
     </Dialog>
   );
 }
 
-function AddEntryBody({ sessionId, questions, dates, onClose }: { sessionId: string; questions: Question[]; dates: string[]; onClose: () => void }) {
+function AddEntryBody({
+  sessionId,
+  questions,
+  dates,
+  onClose,
+  walkInDate,
+}: {
+  sessionId: string;
+  questions: Question[];
+  dates: string[];
+  onClose: () => void;
+  walkInDate?: string;
+}) {
   const router = useRouter();
   const fields = publicFields("intake", questions, dates);
   const [values, setValues] = useState<FieldValues>({});
@@ -61,7 +83,7 @@ function AddEntryBody({ sessionId, questions, dates, onClose }: { sessionId: str
     const answers = Object.fromEntries(customIds.filter((id) => v[id] !== undefined).map((id) => [id, v[id]]));
 
     setSaving(true);
-    const result = await addEntryManually(sessionId, {
+    const profile = {
       name: v.name,
       email: v.email,
       phone: v.phone,
@@ -72,7 +94,11 @@ function AddEntryBody({ sessionId, questions, dates, onClose }: { sessionId: str
       disability: v.disability,
       consent: v.consent,
       answers,
-    });
+    };
+    const result =
+      walkInDate !== undefined
+        ? await addWalkin(sessionId, walkInDate, profile)
+        : await addEntryManually(sessionId, profile);
     setSaving(false);
     if (!result.ok) return setFormError(result.error);
     router.refresh();
