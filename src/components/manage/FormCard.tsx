@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { setFormStatus } from "@/app/manage/actions";
 import { btnSm, card, input } from "@/components/ui/styles";
-import type { CoreQuestion } from "@/lib/forms/core-questions";
+import type { FieldSpec as CoreQuestion } from "@/lib/forms/fields";
 import type { Question } from "@/lib/forms/questions";
 import { QuestionEditor } from "./QuestionEditor";
 import { ShareDialog } from "./ShareDialog";

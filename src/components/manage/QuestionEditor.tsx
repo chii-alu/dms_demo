@@ -6,7 +6,7 @@ import { saveFormQuestions } from "@/app/manage/actions";
 import { Dialog } from "@/components/ui/Dialog";
 import { btn, btnPri, btnSm, input, label } from "@/components/ui/styles";
 import { QUESTION_TYPE_LABELS, QUESTION_TYPES, type Question, type QuestionType } from "@/lib/forms/questions";
-import type { CoreQuestion } from "@/lib/forms/core-questions";
+import type { FieldSpec as CoreQuestion } from "@/lib/forms/fields";
 
 const NEEDS_OPTIONS: QuestionType[] = ["single", "multi"];
 
