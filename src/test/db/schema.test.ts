@@ -156,8 +156,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
     expect(forms.rows.map((f) => f.kind)).toEqual(["attendance", "feedback", "intake"]);
     const codes = forms.rows.map((f) => f.code);
     expect(new Set(codes).size).toBe(3);
-    expect(codes.every((c) => /^HENT-M-\d{3}-(ATT|FBK|REG)$/.test(c) || /^HENT-M-\d{3}-(ATT|FBK|REG)$/.test(c))).toBe(true);
-    expect(codes.find((c) => c.endsWith("-REG"))).toBeDefined();
+    expect(codes.every((c) => /^HENT-M-\d{3}-(REG|ATT|FBK)$/.test(c))).toBe(true);
     const kind = await db.query<{ kind: string }>("select kind from sessions where id = $1", [sid]);
     expect(kind.rows[0].kind).toBe("registration");
     const rubric = await db.query("select 1 from rubric_criteria where session_id = $1", [sid]);
@@ -230,8 +229,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
   });
 
   it("pillar staff can create a session in their own pillar", async () => {
-    const ivId = await interventionId("Career Workshops".replace("Career Workshops", "Masterclass"));
-    const r = await createSession(HENT_STAFF, ivId, { title: "Staff-created" });
+    const r = await createSession(HENT_STAFF, await interventionId("Masterclass"), { title: "Staff-created" });
     expect(r.rows[0].id).toBeTruthy();
   });
 
