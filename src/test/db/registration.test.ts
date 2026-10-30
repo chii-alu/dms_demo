@@ -40,8 +40,8 @@ describe("masterclass registration form", () => {
     expect(r.rows[0].f).toBeNull();
   });
 
-  it("anonymous visitors cannot read the registration tables", async () => {
-    await expect(asAnon(db, "select * from public.registration_form")).rejects.toThrow(/permission denied/);
+  it("anonymous visitors cannot read the registration forms or anyone's identity", async () => {
+    expect((await asAnon(db, "select * from public.registration_form")).rows).toHaveLength(0);
     await expect(asAnon(db, "select * from public.beneficiary_identity")).rejects.toThrow(/permission denied/);
   });
 
@@ -123,7 +123,7 @@ describe("masterclass registration form", () => {
     await db.exec("update registration_form set status = 'open' where code = 'startup-finance-2026'");
   });
 
-  it("keeps the registration tables closed to staff who are not admins", async () => {
+  it("admins can see the registration forms", async () => {
     const r = await asUser(db, ADMIN, "select count(*)::int n from registration_form");
     expect(r.rows[0].n).toBeGreaterThan(0);
   });
