@@ -1,26 +1,84 @@
 @import "tailwindcss";
 
+/* Design tokens ported from prototype.html :root (light + dark). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --bg: #f3f4f1;
+  --surface: #ffffff;
+  --sunk: #eceeea;
+  --ink: #17201c;
+  --muted: #5a6560;
+  --line: #dce0da;
+  --accent: #2f45a3;
+  --accent-soft: #e6e9f7;
+  --hent: #b8541a;
+  --hent-soft: #f8e9df;
+  --hemp: #0d7279;
+  --hemp-soft: #ddf0f1;
+  --heco: #7a3c96;
+  --heco-soft: #f0e5f5;
+  --ok: #2c7a4b;
+  --ok-soft: #e1f2e7;
+  --warn: #a86a12;
+  --warn-soft: #faefd9;
+  --bad: #b03a2e;
+  --bad-soft: #f8e3e0;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #111514;
+    --surface: #1a1f1d;
+    --sunk: #151917;
+    --ink: #e6ebe7;
+    --muted: #9ba6a0;
+    --line: #2c3431;
+    --accent: #93a3ff;
+    --accent-soft: #232a4a;
+    --hent: #f0965e;
+    --hent-soft: #3a2618;
+    --hemp: #5cc5cb;
+    --hemp-soft: #14302f;
+    --heco: #c99ae0;
+    --heco-soft: #2e2136;
+    --ok: #6fcb92;
+    --ok-soft: #173025;
+    --warn: #e3b05a;
+    --warn-soft: #332713;
+    --bad: #ef8a7e;
+    --bad-soft: #3a1e1b;
+    color-scheme: dark;
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-sunk: var(--sunk);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-hent: var(--hent);
+  --color-hent-soft: var(--hent-soft);
+  --color-hemp: var(--hemp);
+  --color-hemp-soft: var(--hemp-soft);
+  --color-heco: var(--heco);
+  --color-heco-soft: var(--heco-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --font-sans: var(--font-public-sans), "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-bricolage), "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, Menlo, monospace;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
 }
