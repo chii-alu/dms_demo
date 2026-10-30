@@ -49,7 +49,6 @@ export async function createSession(input: {
 
   const values = sessionInputSchema.safeParse(input.session);
   if (!values.success) return fail(values.error.issues[0].message);
-  if (values.data.mode === "In person" && false) return fail("unreachable");
 
   const { data: iv, error: ivError } = await supabase
     .from("interventions")
