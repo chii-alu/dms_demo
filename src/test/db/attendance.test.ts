@@ -26,6 +26,16 @@ async function attendanceCount(sid: string) {
   return (await db.query<{ n: number }>("select count(*)::int n from attendance where session_id = $1", [sid])).rows[0].n;
 }
 
+
+// Submit an intake through the public RPC. The code is read as the owner, since anon cannot see forms.
+async function register(sid: string, email: string, name = email) {
+  const code = (await db.query<{ code: string }>("select code from forms where session_id = $1 and kind = 'intake'", [sid])).rows[0].code;
+  return asAnon(db, "select public.submit_intake($1, $2::jsonb, '{}'::jsonb) as r", [
+    code,
+    JSON.stringify({ name, email, consent: "yes" }),
+  ]);
+}
+
 beforeAll(async () => {
   db = await setupDb();
 });
@@ -33,10 +43,7 @@ beforeAll(async () => {
 describe("set_attendance (SPEC §4.10 eligibility)", () => {
   it("marks an eligible participant present and back to absent", async () => {
     const sid = await session("Masterclass");
-    await asAnon(db, "select public.submit_intake(code, $1::jsonb, '{}'::jsonb) from forms where session_id = $2 and kind = 'intake'", [
-      JSON.stringify({ name: "Toggle", email: "toggle@example.org", consent: "yes" }),
-      sid,
-    ]);
+    await register(sid, "toggle@example.org", "Toggle");
     const p = await pid("toggle@example.org");
     await asUser(db, ADMIN, "select public.set_attendance($1, $2, '2026-11-12'::date, true)", [sid, p]);
     expect(await attendanceCount(sid)).toBe(1);
@@ -46,10 +53,7 @@ describe("set_attendance (SPEC §4.10 eligibility)", () => {
 
   it("refuses to mark a pending applicant present", async () => {
     const sid = await session("Ventures");
-    await asAnon(db, "select public.submit_intake(code, $1::jsonb, '{}'::jsonb) from forms where session_id = $2 and kind = 'intake'", [
-      JSON.stringify({ name: "Pending", email: "pending2@example.org", consent: "yes" }),
-      sid,
-    ]);
+    await register(sid, "pending2@example.org", "Pending");
     await expect(
       asUser(db, ADMIN, "select public.set_attendance($1, $2, '2026-11-12'::date, true)", [sid, await pid("pending2@example.org")]),
     ).rejects.toThrow(/Only eligible/);
@@ -67,10 +71,7 @@ describe("mark_all_present", () => {
   it("marks every eligible participant once and reports the number newly marked", async () => {
     const sid = await session("Masterclass");
     for (const e of ["m1@example.org", "m2@example.org"]) {
-      await asAnon(db, "select public.submit_intake(code, $1::jsonb, '{}'::jsonb) from forms where session_id = $2 and kind = 'intake'", [
-        JSON.stringify({ name: e, email: e, consent: "yes" }),
-        sid,
-      ]);
+      await register(sid, e);
     }
     const first = await asUser(db, ADMIN, "select public.mark_all_present($1, '2026-11-12'::date) as n", [sid]);
     expect(first.rows[0].n).toBe(2);

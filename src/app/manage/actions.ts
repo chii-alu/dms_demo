@@ -8,6 +8,7 @@ import { formKindSchema, formStatusSchema, questionsSchema, rubricSchema, sessio
 import type { Question } from "@/lib/forms/questions";
 import { z } from "zod";
 import { ENTRY_STATUSES } from "@/lib/sessions/status";
+import { isIsoDate } from "@/lib/dates";
 
 // Server Actions return a result instead of throwing, so forms can show the message.
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
@@ -289,4 +290,55 @@ export async function addEntryManually(sessionId: string, profile: Record<string
 
   revalidatePath(`/manage/sessions/${sessionId}`, "layout");
   return { ok: true, data: data as { pid: string; status: string } };
+}
+
+const dateSchema = z.string().refine(isIsoDate, "Use a real date in YYYY-MM-DD form");
+
+// Attendance: toggle one participant for one session date (SPEC §4.10, §7 "present toggles").
+export async function setAttendance(sessionId: string, participantId: string, date: string, present: boolean): Promise<ActionResult> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+  if (!uuidSchema.safeParse(sessionId).success || !uuidSchema.safeParse(participantId).success) return fail("Unknown record.");
+  const d = dateSchema.safeParse(date);
+  if (!d.success) return fail(d.error.issues[0].message);
+
+  const { error } = await supabase.rpc("set_attendance", {
+    p_session_id: sessionId,
+    p_participant_id: participantId,
+    p_date: d.data,
+    p_present: present,
+  });
+  if (error) return fail(explain(error));
+
+  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  return { ok: true, data: undefined };
+}
+
+export async function markAllPresent(sessionId: string, date: string): Promise<ActionResult<{ marked: number }>> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+  if (!uuidSchema.safeParse(sessionId).success) return fail("That session could not be found.");
+  const d = dateSchema.safeParse(date);
+  if (!d.success) return fail(d.error.issues[0].message);
+
+  const { data, error } = await supabase.rpc("mark_all_present", { p_session_id: sessionId, p_date: d.data });
+  if (error) return fail(explain(error));
+
+  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  return { ok: true, data: { marked: Number(data ?? 0) } };
+}
+
+// Walk-in at an open session (SPEC §4.11).
+export async function addWalkin(sessionId: string, date: string, profile: Record<string, unknown>): Promise<ActionResult<{ pid: string }>> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+  if (!uuidSchema.safeParse(sessionId).success) return fail("That session could not be found.");
+  const d = dateSchema.safeParse(date);
+  if (!d.success) return fail(d.error.issues[0].message);
+
+  const { data, error } = await supabase.rpc("add_walkin", { p_session_id: sessionId, p_profile: profile, p_date: d.data });
+  if (error) return fail(explain(error));
+
+  revalidatePath(`/manage/sessions/${sessionId}`, "layout");
+  return { ok: true, data: { pid: (data as { pid: string }).pid } };
 }
