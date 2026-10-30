@@ -60,6 +60,17 @@ describe("masterclass template branching", () => {
     expect(!r.success && r.error.issues.map((i) => i.path[0])).toContain("whatsapp");
   });
 
+  it("asks ALU students for an ALU student email address, and does not ask for their name", () => {
+    const ids = visibleFields(MASTERCLASS_TEMPLATE, { institution: "ALU" }).map((f) => f.id);
+    expect(ids).not.toContain("full_name");
+    const wrong = validateAnswers(MASTERCLASS_TEMPLATE, { ...aluAnswers, student_email: "amina@gmail.com" });
+    expect(wrong.success).toBe(false);
+    expect(!wrong.success && wrong.error.issues.map((i) => i.path[0])).toContain("student_email");
+    expect(validateAnswers(MASTERCLASS_TEMPLATE, { ...aluAnswers, student_email: "amina@alustudent.com" }).success).toBe(true);
+    expect(validateAnswers(MASTERCLASS_TEMPLATE, { ...aluAnswers, student_email: "amina@alumni.alustudent.com" }).success).toBe(true);
+    expect(validateAnswers(MASTERCLASS_TEMPLATE, { ...aluAnswers, student_email: "s.babalola@alumni.alustudent.com" }).success).toBe(true);
+  });
+
   it("requires the student email for ALU students", () => {
     const r = validateAnswers(MASTERCLASS_TEMPLATE, { ...aluAnswers, student_email: undefined });
     expect(r.success).toBe(false);

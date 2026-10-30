@@ -12,6 +12,8 @@ export type FieldSpec = {
   options?: string[];
   // Shown only when the answer to question `id` is one of `equals`. Hidden fields are not asked or saved.
   showWhen?: { id: string; equals: string[] };
+  // For email fields: the address must be on one of these domains (or a subdomain of one).
+  emailDomains?: string[];
 };
 
 export type PublicFormKind = "intake" | "attendance" | "feedback";
@@ -59,6 +61,13 @@ export function validateAnswers(fields: FieldSpec[], values: Record<string, unkn
   return buildValuesSchema(visibleFields(fields, values)).safeParse(values);
 }
 
+// Whether an address is on a domain: "example.org" matches "a@example.org" and "a@mail.example.org".
+export function isOnDomain(address: string, domain: string) {
+  const host = address.toLowerCase().split("@").pop() ?? "";
+  const d = domain.toLowerCase();
+  return host === d || host.endsWith(`.${d}`);
+}
+
 const isEmpty = (v: unknown) => v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
 
 // Builds a zod schema for the whole form. Required questions reject empty values with a plain message.
@@ -76,7 +85,15 @@ function fieldSchema(f: FieldSpec): z.ZodType {
       base = z.literal("yes", { message: requiredMsg });
       break;
     case "email":
-      base = z.string({ message: requiredMsg }).trim().min(f.required ? 1 : 0, requiredMsg).email("Enter a valid email address.").max(254);
+      base = z
+        .string({ message: requiredMsg })
+        .trim()
+        .min(f.required ? 1 : 0, requiredMsg)
+        .email("Enter a valid email address.")
+        .max(254)
+        .refine((v) => !f.emailDomains || f.emailDomains.some((d) => isOnDomain(v, d)), {
+          message: `Use your ${(f.emailDomains ?? [""])[0]} email address.`,
+        });
       break;
     case "number":
       base = z.number({ message: "Enter a number." });

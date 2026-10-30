@@ -68,3 +68,14 @@ describe("publicFields", () => {
     expect(r.success).toBe(true);
   });
 });
+
+describe("isOnDomain", () => {
+  it("matches the domain and its subdomains, but not look-alikes", async () => {
+    const { isOnDomain } = await import("./fields");
+    expect(isOnDomain("a@alustudent.com", "alustudent.com")).toBe(true);
+    expect(isOnDomain("a@ALUSTUDENT.com", "alustudent.com")).toBe(true);
+    expect(isOnDomain("a@alumni.alustudent.com", "alustudent.com")).toBe(true);
+    expect(isOnDomain("a@notalustudent.com", "alustudent.com")).toBe(false);
+    expect(isOnDomain("a@alustudent.com.evil.org", "alustudent.com")).toBe(false);
+  });
+});

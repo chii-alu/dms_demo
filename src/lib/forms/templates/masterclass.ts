@@ -23,7 +23,14 @@ export const MASTERCLASS_TEMPLATE: FieldSpec[] = [
     options: ["ALU", "ALX", "Other"],
   },
   { id: "institution_other", label: "Name of your institution", type: "text", required: true, showWhen: { id: "institution", equals: ["Other"] } },
-  { id: "student_email", label: "Student email address", type: "email", required: true, showWhen: ALU_ONLY },
+  {
+    id: "student_email",
+    label: "Student email address",
+    type: "email",
+    required: true,
+    showWhen: ALU_ONLY,
+    emailDomains: ["alustudent.com", "alumni.alustudent.com"],
+  },
 
   // Asked of everyone, so ALU students give their personal email, WhatsApp number and residence too.
   { id: "personal_email", label: "Personal email address", type: "email", required: true },

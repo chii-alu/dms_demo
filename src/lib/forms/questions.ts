@@ -39,6 +39,7 @@ export const questionSchema = z
     required: z.boolean(),
     // Shown only when the answer to question `id` is one of `equals`.
     showWhen: z.object({ id: z.string().min(1).max(64), equals: z.array(z.string().min(1)).min(1) }).optional(),
+    emailDomains: z.array(z.string().min(1).max(253)).optional(),
   })
   .superRefine((q, ctx) => {
     if (CHOICE_TYPES.includes(q.type) && (!q.options || q.options.length === 0)) {
