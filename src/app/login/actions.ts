@@ -2,11 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-// Only allow same-site relative paths as post-login destinations.
-function safeNext(next: string) {
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/manage";
-}
+import { safeNext } from "@/lib/redirect";
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
