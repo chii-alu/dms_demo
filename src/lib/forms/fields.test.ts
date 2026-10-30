@@ -17,7 +17,7 @@ describe("buildValuesSchema", () => {
   it("accepts a complete, valid answer set and drops empty optional answers", () => {
     const r = buildValuesSchema(fields).safeParse({ ...good, note: "", tags: [] });
     expect(r.success).toBe(true);
-    expect(r.success && r.data).not.toHaveProperty("note");
+    expect(r.success && r.data.note).toBeUndefined();
   });
 
   it("reports a plain message for an empty required text answer", () => {

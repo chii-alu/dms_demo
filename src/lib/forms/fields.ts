@@ -57,7 +57,7 @@ function fieldSchema(f: FieldSpec): z.ZodType {
       base = z.literal("yes", { message: requiredMsg });
       break;
     case "email":
-      base = z.string({ message: requiredMsg }).trim().email("Enter a valid email address.").max(254);
+      base = z.string({ message: requiredMsg }).trim().min(f.required ? 1 : 0, requiredMsg).email("Enter a valid email address.").max(254);
       break;
     case "number":
       base = z.number({ message: "Enter a number." });
@@ -78,10 +78,10 @@ function fieldSchema(f: FieldSpec): z.ZodType {
       base = z.array(z.enum((f.options ?? []) as [string, ...string[]])).min(1, { message: requiredMsg });
       break;
     case "long":
-      base = z.string({ message: requiredMsg }).trim().max(4000);
+      base = z.string({ message: requiredMsg }).trim().min(f.required ? 1 : 0, requiredMsg).max(4000);
       break;
     default:
-      base = z.string({ message: requiredMsg }).trim().max(500);
+      base = z.string({ message: requiredMsg }).trim().min(f.required ? 1 : 0, requiredMsg).max(500);
   }
   // Empty optional answers are dropped; empty required answers fail with requiredMsg.
   return z.preprocess((v) => (isEmpty(v) ? undefined : v), f.required ? base : base.optional());

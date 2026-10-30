@@ -41,20 +41,23 @@ export async function setupDb() {
 }
 
 // Runs SQL as an authenticated user (RLS applies), then restores the session.
-export async function asUser(db: PGlite, uid: string, sql: string, params: unknown[] = []) {
+// Rows are loosely typed: tests assert on known shapes.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function asUser<T = any>(db: PGlite, uid: string, sql: string, params: unknown[] = []) {
   await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub', '${uid}', false)`);
   try {
-    return await db.query(sql, params);
+    return await db.query<T>(sql, params);
   } finally {
     await db.exec("reset role; select set_config('request.jwt.claim.sub', '', false)");
   }
 }
 
 // Runs SQL as anonymous (the public forms' role).
-export async function asAnon(db: PGlite, sql: string, params: unknown[] = []) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function asAnon<T = any>(db: PGlite, sql: string, params: unknown[] = []) {
   await db.exec("set role anon; select set_config('request.jwt.claim.sub', '', false)");
   try {
-    return await db.query(sql, params);
+    return await db.query<T>(sql, params);
   } finally {
     await db.exec("reset role");
   }
