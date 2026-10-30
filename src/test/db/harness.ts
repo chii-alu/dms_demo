@@ -22,15 +22,17 @@ export async function setupDb() {
     grant usage on schema public, auth to anon, authenticated;
     grant execute on function auth.uid() to anon, authenticated;
   `);
+  // Mirror Supabase's default privileges: objects created by the migrations are granted to
+  // anon and authenticated automatically, so the migrations' own REVOKEs must take effect.
+  await db.exec(`
+    alter default privileges in schema public grant all on tables to anon, authenticated;
+    alter default privileges in schema public grant usage, select on sequences to anon, authenticated;
+    alter default privileges in schema public grant execute on functions to anon, authenticated;
+  `);
   const dir = path.join(ROOT, "supabase/migrations");
   for (const file of readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
     await db.exec(readFileSync(path.join(dir, file), "utf8"));
   }
-  await db.exec(`
-    grant all on all tables in schema public to authenticated, anon;
-    grant usage, select on all sequences in schema public to authenticated;
-    grant execute on all functions in schema public to authenticated;
-  `);
   await db.exec(readFileSync(path.join(ROOT, "supabase/seed.sql"), "utf8"));
   await db.exec(`
     insert into auth.users values ('${ADMIN}'), ('${HENT_STAFF}');

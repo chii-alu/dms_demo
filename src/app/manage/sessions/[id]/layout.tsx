@@ -22,6 +22,30 @@ export default async function SessionLayout({
     .maybeSingle();
   if (!s) notFound();
 
+  // Pipeline numbers use the same definitions as v_session_summary (SPEC §3).
+  const [{ data: entries }, { data: attendance }, { count: feedbackCount }] = await Promise.all([
+    supabase.from("entries").select("status, participant_id").eq("session_id", id),
+    supabase.from("attendance").select("participant_id").eq("session_id", id),
+    supabase.from("feedback").select("id", { count: "exact", head: true }).eq("session_id", id),
+  ]);
+  const selectiveKind = s.kind === "application";
+  const eligibleStatus = selectiveKind ? "selected" : "registered";
+  const eligible = (entries ?? []).filter((e) => e.status === eligibleStatus).length;
+  const attendees = new Set((attendance ?? []).map((a) => a.participant_id)).size;
+  const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : "—");
+  const stages: [string, number, string][] = selectiveKind
+    ? [
+        ["Applications", entries?.length ?? 0, `${(entries ?? []).filter((e) => e.status === "applied").length} to review`],
+        ["Selected", eligible, `${(entries ?? []).filter((e) => e.status === "shortlisted").length} shortlisted`],
+        ["Attended", attendees, `${pct(attendees, eligible)} of selected`],
+        ["Feedback", feedbackCount ?? 0, `${pct(feedbackCount ?? 0, attendees)} of attendees`],
+      ]
+    : [
+        ["Registered", eligible, `${(entries?.length ?? 0) - eligible} waitlisted or cancelled`],
+        ["Attended", attendees, `${pct(attendees, eligible)} turnout`],
+        ["Feedback", feedbackCount ?? 0, `${pct(feedbackCount ?? 0, attendees)} response rate`],
+      ];
+
   const iv = s.interventions as unknown as { id: string; name: string };
   const selective = s.kind === "application";
   const status = sessionStatus(s.dates, todayIso());
@@ -50,6 +74,16 @@ export default async function SessionLayout({
       </div>
       <h1 className="mt-2 font-display text-3xl font-semibold">{s.title}</h1>
       <p className="mt-1 text-muted">{meta.join(" · ")}</p>
+
+      <div className="mt-5 grid overflow-hidden rounded-[10px] border border-line bg-surface sm:grid-cols-2 xl:grid-cols-4">
+        {stages.map(([label, value, note]) => (
+          <div key={label} className="border-b border-line p-3 last:border-b-0 sm:border-r sm:last:border-r-0 xl:border-b-0">
+            <div className="text-xs font-semibold text-muted">{label}</div>
+            <div className="font-display text-2xl font-semibold tabular-nums">{value}</div>
+            <div className="text-xs text-muted">{note}</div>
+          </div>
+        ))}
+      </div>
 
       <SessionTabs sessionId={s.id} selective={selective} />
       <div className="mt-6">{children}</div>
