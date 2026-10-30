@@ -54,11 +54,15 @@ export function ManageNav({
         {subtitle && <div className="text-xs text-muted">{subtitle}</div>}
       </div>
 
+      {portal === "admin" && (
+        <div className="px-2.5 pb-1.5 text-xs font-semibold tracking-wider text-muted">OVERVIEW AND RECORDS</div>
+      )}
       <NavLink href={`/manage/${portal}`}>Overview</NavLink>
       <NavLink href={`/manage/${portal}/registry`}>Participant registry</NavLink>
       <NavLink href={`/manage/${portal}/feedback-registry`}>Feedback registry</NavLink>
       <NavLink href={`/manage/${portal}/data`}>Data for the dashboard</NavLink>
-      {showStaffAccess && <NavLink href={`/manage/${portal}/staff`}>Staff access</NavLink>}
+
+      <div className="px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted">PILLAR TRACKER</div>
 
       {pillars.map(({ pillar, interventions }) => {
         const body = (
@@ -104,6 +108,13 @@ export function ManageNav({
           </details>
         );
       })}
+
+      {showStaffAccess && (
+        <>
+          <div className="px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted">ACCESS MANAGEMENT</div>
+          <NavLink href={`/manage/${portal}/staff`}>Staff access</NavLink>
+        </>
+      )}
 
       <div className="mt-auto border-t border-line pt-4 text-sm">
         <Link href="/dashboard" className="block px-2.5 py-1.5 text-accent hover:underline">
