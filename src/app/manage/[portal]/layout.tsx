@@ -59,7 +59,8 @@ export default async function ManageLayout({
         <ManageNav
           portal={requested}
           pillars={pillars}
-          portalLabel={PORTAL_LABEL[requested]}
+          heading={requested === "admin" ? "MELA" : `${PORTAL_LABEL[requested].toUpperCase()} MANAGEMENT TRACKER`}
+          subtitle={requested === "admin" ? "Intervention manager" : undefined}
           signOutAction={signOut}
           isAdmin={isAdmin}
           showStaffAccess={isAdmin && requested === "admin"}

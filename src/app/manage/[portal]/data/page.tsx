@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { card, btnSm } from "@/components/ui/styles";
 import { EXPORT_TABLES, type ExportTable } from "@/lib/export/tables";
+import { isPortal } from "@/lib/auth/portals";
+import { PORTAL_COPY } from "@/lib/portal-copy";
 
 const TABLE_INFO: Record<ExportTable, { description: string; links: string }> = {
   participants: { description: "One row per person.", links: "pid" },
@@ -29,7 +31,9 @@ const TABLE_NAME: Record<ExportTable, string> = {
   feedback: "feedback",
 };
 
-export default async function DataPage() {
+export default async function DataPage({ params }: { params: Promise<{ portal: string }> }) {
+  const { portal } = await params;
+  const copy = isPortal(portal) ? PORTAL_COPY[portal] : PORTAL_COPY.admin;
   const supabase = await createClient();
   const {
     data: { user },
@@ -51,8 +55,7 @@ export default async function DataPage() {
       <div>
         <h1 className="font-display text-3xl font-semibold">Data for the dashboard</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Everything collected here is stored in six linked tables. The dashboard connects to these tables, or to the reporting views in the database.
-          Downloads are for admins only, because they contain personal data.
+          {copy.data}
         </p>
       </div>
 

@@ -22,7 +22,8 @@ function explain(error: { code?: string; message: string }) {
   if (error.code === "42501" || /row-level security/i.test(error.message)) {
     return "You do not have access to this pillar.";
   }
-  if (error.code === "P0002") return "That record no longer exists.";
+  // Not-found errors raised by our functions name what is missing, e.g. "No account exists for ...".
+  if (error.code === "P0002") return error.message;
   return error.message;
 }
 

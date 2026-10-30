@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { RegistryTable, type RegistryRow } from "@/components/manage/RegistryTable";
+import { isPortal } from "@/lib/auth/portals";
+import { PORTAL_COPY } from "@/lib/portal-copy";
 
-export default async function RegistryPage() {
+export default async function RegistryPage({ params }: { params: Promise<{ portal: string }> }) {
+  const { portal } = await params;
+  const copy = isPortal(portal) ? PORTAL_COPY[portal] : PORTAL_COPY.admin;
   const supabase = await createClient();
 
   const [{ data: people, error }, { data: entries }, { data: attendance }] = await Promise.all([
@@ -34,7 +38,7 @@ export default async function RegistryPage() {
       <div>
         <h1 className="font-display text-3xl font-semibold">Participant registry</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          One record per person, matched by email. Every registration, application, check-in and feedback response links to the participant ID, so you can count unique reach and follow someone across pillars.
+          {copy.registry}
         </p>
       </div>
       <RegistryTable rows={rows} />

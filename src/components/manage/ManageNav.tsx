@@ -33,14 +33,16 @@ function NavLink({ href, children, count }: { href: string; children: React.Reac
 export function ManageNav({
   portal,
   pillars,
-  portalLabel,
+  heading,
+  subtitle,
   signOutAction,
   isAdmin,
   showStaffAccess,
 }: {
   portal: string;
   pillars: NavPillar[];
-  portalLabel: string;
+  heading: string;
+  subtitle?: string;
   signOutAction: () => Promise<void>;
   isAdmin: boolean;
   showStaffAccess: boolean;
@@ -48,35 +50,60 @@ export function ManageNav({
   return (
     <nav aria-label="Pillars and interventions" className="flex h-full flex-col">
       <div className="px-2.5 pb-4 pt-1">
-        <div className="font-display text-xl font-semibold">MELA</div>
-        <div className="text-xs text-muted">Intervention manager · {portalLabel}</div>
+        <div className="font-display text-xl font-semibold">{heading}</div>
+        {subtitle && <div className="text-xs text-muted">{subtitle}</div>}
       </div>
 
       <NavLink href={`/manage/${portal}`}>Overview</NavLink>
       <NavLink href={`/manage/${portal}/registry`}>Participant registry</NavLink>
+      <NavLink href={`/manage/${portal}/feedback-registry`}>Feedback registry</NavLink>
       <NavLink href={`/manage/${portal}/data`}>Data for the dashboard</NavLink>
       {showStaffAccess && <NavLink href={`/manage/${portal}/staff`}>Staff access</NavLink>}
 
-      {pillars.map(({ pillar, interventions }) => (
-        <div key={pillar}>
-          <div className="flex items-center gap-2 px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted">
-            <span className="h-3.5 w-1 rounded-sm" style={{ background: PILLAR_COLOR[pillar] }} />
-            {pillar}
-          </div>
-          {interventions.map((i) => (
-            <NavLink key={i.id} href={`/manage/${portal}/interventions/${i.id}`} count={i.sessionCount}>
-              <span
-                className={`inline-block h-2 w-2 flex-none rounded-full border-[1.5px] border-muted ${
-                  i.type === "selective" ? "bg-muted" : ""
-                }`}
-                title={i.type}
-              />
-              {i.name}
-            </NavLink>
-          ))}
-          {isAdmin && <AddInterventionDialog pillar={pillar} />}
-        </div>
-      ))}
+      {pillars.map(({ pillar, interventions }) => {
+        const body = (
+          <>
+            {interventions.map((i) => (
+              <NavLink key={i.id} href={`/manage/${portal}/interventions/${i.id}`} count={i.sessionCount}>
+                <span
+                  className={`inline-block h-2 w-2 flex-none rounded-full border-[1.5px] border-muted ${
+                    i.type === "selective" ? "bg-muted" : ""
+                  }`}
+                  title={i.type}
+                />
+                {i.name}
+              </NavLink>
+            ))}
+            {isAdmin && <AddInterventionDialog pillar={pillar} />}
+          </>
+        );
+        const colour = <span className="h-3.5 w-1 rounded-sm" style={{ background: PILLAR_COLOR[pillar] }} />;
+
+        // The admin view can fold each pillar's interventions away. Pillar views always show them.
+        if (portal !== "admin") {
+          return (
+            <div key={pillar}>
+              <div className="flex items-center gap-2 px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted">
+                {colour}
+                {pillar}
+              </div>
+              {body}
+            </div>
+          );
+        }
+        return (
+          <details key={pillar} open className="group">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 pb-1.5 pt-4 text-xs font-semibold tracking-wider text-muted hover:text-ink [&::-webkit-details-marker]:hidden">
+              {colour}
+              {pillar}
+              <span aria-hidden className="ml-auto text-sm transition-transform group-open:rotate-90">
+                ›
+              </span>
+            </summary>
+            {body}
+          </details>
+        );
+      })}
 
       <div className="mt-auto border-t border-line pt-4 text-sm">
         <Link href="/dashboard" className="block px-2.5 py-1.5 text-accent hover:underline">

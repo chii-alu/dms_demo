@@ -1,5 +1,5 @@
 import { signIn } from "./actions";
-import { PORTAL_LABEL, isPortal, type Portal } from "@/lib/auth/portals";
+import { PORTAL_LABEL, type Portal } from "@/lib/auth/portals";
 
 // The order the views appear in on the sign-in page.
 const VIEW_ORDER: Portal[] = ["admin", "hent", "hemp", "heco"];
@@ -14,9 +14,9 @@ const messages: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string; portal?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
-  const { error, next, portal } = await searchParams;
+  const { error, next } = await searchParams;
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">

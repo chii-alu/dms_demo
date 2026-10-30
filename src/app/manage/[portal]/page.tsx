@@ -7,6 +7,7 @@ import { needsAttention, type AttentionSession } from "@/lib/rules/attention";
 import { PillarChip, StatusChip } from "@/components/manage/Chips";
 import { card } from "@/components/ui/styles";
 import { pillarsForPortal, isPortal } from "@/lib/auth/portals";
+import { PORTAL_COPY } from "@/lib/portal-copy";
 
 const TONE: Record<"accent" | "warn" | "bad", string> = {
   accent: "var(--accent)",
@@ -68,7 +69,7 @@ export default async function OverviewPage({ params }: { params: Promise<{ porta
         <div>
           <h1 className="font-display text-3xl font-semibold">Overview</h1>
           <p className="mt-2 max-w-2xl text-muted">
-            Every intervention runs as a series of sessions. Each session gets its own forms, participant list, attendance and feedback, all linked to one participant registry.
+            {PORTAL_COPY[requested].overview}
           </p>
         </div>
       </div>
