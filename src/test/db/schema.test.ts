@@ -153,7 +153,8 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
       "select kind, code from forms where session_id = $1 order by kind",
       [sid],
     );
-    expect(forms.rows.map((f) => f.kind)).toEqual(["attendance", "feedback", "intake"]);
+    // Ordered by the form_kind enum: intake, attendance, feedback.
+    expect(forms.rows.map((f) => f.kind)).toEqual(["intake", "attendance", "feedback"]);
     const codes = forms.rows.map((f) => f.code);
     expect(new Set(codes).size).toBe(3);
     expect(codes.every((c) => /^HENT-M-\d{3}-(REG|ATT|FBK)$/.test(c))).toBe(true);
