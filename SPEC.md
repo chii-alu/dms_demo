@@ -33,29 +33,52 @@ The repo is a **single Next.js app** that holds both this Intervention Manager (
 | Tests | Vitest + React Testing Library; Playwright for the public form flows |
 | Hosting | Vercel |
 
-If the dashboard already uses a different database or ORM (e.g. Prisma, Drizzle, another Postgres), follow the dashboard's choice and adapt §3 to it rather than adding a second database. The dashboard reads the reporting views in §3 directly from the same database.
+The dashboard reads the reporting views in §3 directly from the same Supabase database. Its routes live under `/dashboard`, so they never collide with `/manage`, `/f` or `/api`.
+
+### Route plan (fixed: avoids future conflicts)
+| Path | Purpose | Auth |
+|---|---|---|
+| `/` | Landing page with links to Manage and Dashboard | public |
+| `/login` | Staff sign-in (email and password) | public |
+| `/manage/...` | Intervention Manager (all staff screens in §7) | staff role |
+| `/dashboard/...` | MELA analytics dashboard (placeholder until built) | staff role |
+| `/f/[code]` | Public forms (intake, check-in, feedback) | public, mobile-first |
+| `/api/forms/[code]/submit` | Public submission endpoint (rate-limited) | public |
+| `/api/export/[table]` | CSV export | admin only |
 
 ### Suggested app structure
 ```
-app/
-  (staff)/                 # authenticated layout with sidebar
-    page.tsx               # Overview
-    interventions/[id]/page.tsx
-    sessions/[id]/(tabs)/forms|people|attendance|feedback|details/page.tsx
-    registry/page.tsx
-    data/page.tsx
-  dashboard/...            # existing dashboard routes
-  f/[code]/page.tsx        # public forms (no auth, mobile-first)
-  api/forms/[code]/submit/route.ts   # public submission endpoint (rate-limited)
-  api/export/[table]/route.ts        # CSV export (admin only)
-lib/
-  supabase/{server,client}.ts
-  forms/core-questions.ts  # locked core questions (§5)
-  forms/schema.ts          # zod schema builder for DynamicForm
-  rules/                   # scoring, eligibility, capacity, completion (pure, unit-tested)
-components/
-  DynamicForm.tsx, QrCard.tsx, StatusSelect.tsx, ...
-supabase/migrations/       # SQL from §3 + RPCs + RLS
+src/
+  proxy.ts                           # session refresh + redirect signed-out visitors to /login
+  app/
+    layout.tsx, globals.css          # fonts and design tokens from the prototype
+    page.tsx                         # landing: Manage / Dashboard
+    login/page.tsx, login/actions.ts # staff sign-in and sign-out (Server Actions)
+    manage/
+      layout.tsx                     # staff-role check + sidebar (pillars → interventions)
+      page.tsx                       # Overview
+      interventions/[id]/page.tsx
+      sessions/[id]/forms|people|attendance|feedback|details/page.tsx
+      registry/page.tsx
+      data/page.tsx
+    dashboard/page.tsx               # placeholder; the dashboard is built here later
+    f/[code]/page.tsx                # public forms (no auth, mobile-first)
+    api/forms/[code]/submit/route.ts # public submission endpoint (rate-limited)
+    api/export/[table]/route.ts      # CSV export (admin only)
+  components/
+    manage/ManageNav.tsx             # sidebar (client component: active link)
+    DynamicForm.tsx, QrCard.tsx, StatusSelect.tsx, ...
+  lib/
+    supabase/{config,server,client,proxy}.ts
+    redirect.ts                      # safeNext(): blocks open redirects
+    forms/core-questions.ts          # locked core questions (§5)
+    forms/schema.ts                  # zod schema builder for DynamicForm
+    rules/                           # scoring, eligibility, capacity, completion (pure, unit-tested)
+supabase/
+  config.toml
+  migrations/                        # SQL from §3 + RPCs + RLS
+  seed.sql                           # interventions (§6)
+e2e/                                 # Playwright
 ```
 
 ## 3. Data model (Postgres)
@@ -253,19 +276,19 @@ Also add a dev-only seed script reproducing the prototype's demo sessions/partic
 
 ## 7. Screens & routes
 
-Staff app (authenticated), layout = left sidebar (Overview, Participant registry, Data, then pillars → interventions with open/selective marker and session count, "+ Add intervention").
+Staff app (authenticated, under `/manage`), layout = left sidebar (Overview, Participant registry, Data, then pillars → interventions with open/selective marker and session count, "+ Add intervention"). The landing page at `/` is public and links here. Routes below are shown without the `/manage` prefix.
 
 | Route | Screen |
 |---|---|
-| `/` | Overview: pillar cards (sessions, unique people, attendances), **Needs attention** list (applications to review, attendance not recorded for past dates, feedback form not opened after a session, intake form still draft for upcoming session), all-sessions table |
-| `/interventions/:id` | Intervention: type selector, KPIs, sessions table, "New session" |
-| `/sessions/:id/forms` | Form cards (status select, edit questions, preview, share link/QR) + rubric (selective) |
-| `/sessions/:id/people` | Registrations / Applications: status filter chips with counts, table, per-row status select, bulk status change, score column sorted desc, "Add manually" |
-| `/sessions/:id/attendance` | Date pills with counts, KPIs, present toggles, "Mark all present", "Add walk-in", check-in QR |
-| `/sessions/:id/feedback` | KPIs (responses & rate, satisfaction, relevance, NPS), custom rating averages, comments |
-| `/sessions/:id/details` | Edit session; delete with confirmation |
-| `/registry` | Searchable participant table; click → profile with journey across sessions/pillars |
-| `/data` | Table list with row counts and CSV export; indicator descriptions |
+| `/manage` | Overview: pillar cards (sessions, unique people, attendances), **Needs attention** list (applications to review, attendance not recorded for past dates, feedback form not opened after a session, intake form still draft for upcoming session), all-sessions table |
+| `/manage/interventions/:id` | Intervention: type selector, KPIs, sessions table, "New session" |
+| `/manage/sessions/:id/forms` | Form cards (status select, edit questions, preview, share link/QR) + rubric (selective) |
+| `/manage/sessions/:id/people` | Registrations / Applications: status filter chips with counts, table, per-row status select, bulk status change, score column sorted desc, "Add manually" |
+| `/manage/sessions/:id/attendance` | Date pills with counts, KPIs, present toggles, "Mark all present", "Add walk-in", check-in QR |
+| `/manage/sessions/:id/feedback` | KPIs (responses & rate, satisfaction, relevance, NPS), custom rating averages, comments |
+| `/manage/sessions/:id/details` | Edit session; delete with confirmation |
+| `/manage/registry` | Searchable participant table; click → profile with journey across sessions/pillars |
+| `/manage/data` | Table list with row counts and CSV export; indicator descriptions |
 
 Modals: New session (intervention, title, dates multi-select, mode, capacity, venue, facilitator, deadline if selective, "Start forms from"), Form editor (locked core + editable custom questions: add, reorder, delete, type, options, required), Rubric editor, Application detail (profile, answers, 1–5 scoring per criterion, live weighted score, status, notify).
 
@@ -281,7 +304,7 @@ Public (no login), mobile-first:
 - `reviewer`: read applications + write own scores for assigned sessions.
 - `dashboard_reader`: select on reporting views only.
 - Public submissions go through the `/api/forms/[code]/submit` Route Handler, which calls **security-definer RPCs** (`submit_intake`, `submit_checkin`, `submit_feedback`), never direct table inserts. The service-role key stays server-side only. Add rate limiting (e.g. Upstash or Vercel KV) and a honeypot field.
-- Protect `(staff)` and `dashboard` routes with Next.js middleware using the Supabase session; check role/pillar in Server Actions as well as RLS.
+- Protect `/manage` and `/dashboard` routes with the Next.js proxy (`src/proxy.ts`) using the Supabase session; check role/pillar in Server Actions as well as RLS.
 - Personal data: consent timestamp stored; participant export restricted to admin; support deleting a participant on request (anonymise in place to keep aggregate counts). Comply with Rwanda's data protection law.
 
 ## 9. Notifications
@@ -290,7 +313,7 @@ On status change (selected / shortlisted / waitlisted / not selected) and on reg
 
 ## 10. Build order (milestones)
 
-1. **Foundation**: inside the existing Next.js dashboard repo, add the `(staff)` route group and `f/[code]` route; Supabase SSR client + middleware auth; schema migrations; seed interventions; sidebar layout. Do not break existing dashboard routes.
+1. **Foundation**: in this single Next.js app, add the `/manage` staff routes (§7), the `/f/[code]` route and the `/dashboard` placeholder; Supabase SSR client + proxy auth; schema migrations; seed interventions; sidebar layout. Keep `/dashboard` routes free for the dashboard.
 2. **Sessions & forms**: create session (auto-generate forms, codes, rubric, copy-from), form editor, form status, QR/share.
 3. **Public forms**: `/f/:code`, DynamicForm, submission RPCs with all §4 rules, success screens.
 4. **People & selection**: registrations/applications tab, status changes, bulk actions, scoring, status history.
