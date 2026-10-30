@@ -2,9 +2,9 @@
 import type { SessionStatus } from "@/lib/rules/session-status";
 
 const PILLAR_CLASS: Record<string, string> = {
-  HENT: "bg-hent-soft text-hent",
-  HEMP: "bg-hemp-soft text-hemp",
-  HECO: "bg-heco-soft text-heco",
+  HENT: "bg-hent-soft text-hent-ink",
+  HEMP: "bg-hemp-soft text-hemp-ink",
+  HECO: "bg-heco-soft text-heco-ink",
 };
 
 export function PillarChip({ pillar }: { pillar: string }) {
@@ -29,7 +29,7 @@ export function TypeChip({ type }: { type: "open" | "selective" }) {
 
 const STATUS_CLASS: Record<SessionStatus, string> = {
   Upcoming: "bg-accent-soft text-accent",
-  "In progress": "bg-ok-soft text-ok",
+  "In progress": "bg-ok-soft text-ok-ink",
   Completed: "bg-sunk text-muted",
   "Not scheduled": "bg-sunk text-muted",
 };

@@ -36,7 +36,7 @@ export function DeleteSessionButton({
 
   return (
     <>
-      <button type="button" className={`${btn} border-bad text-bad`} onClick={() => setOpen(true)}>
+      <button type="button" className={`${btn} border-bad text-bad-ink`} onClick={() => setOpen(true)}>
         Delete session
       </button>
       <Dialog open={open} onClose={() => setOpen(false)} title="Delete this session?">
@@ -44,7 +44,7 @@ export function DeleteSessionButton({
           {sessionTitle} and its {registrations} registration{registrations === 1 ? "" : "s"}, attendance and feedback will be removed. This cannot be undone.
         </p>
         {error && (
-          <p role="alert" className="mt-3 rounded-md bg-bad-soft p-3 text-sm text-bad">
+          <p role="alert" className="mt-3 rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
             {error}
           </p>
         )}

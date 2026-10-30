@@ -57,7 +57,7 @@ export function ShareDialog({
   return (
     <Dialog open={open} onClose={onClose} title={title} description={description}>
       {status !== "open" && (
-        <p className="mb-4 rounded-md bg-warn-soft p-3 text-sm text-warn">
+        <p className="mb-4 rounded-md bg-warn-soft p-3 text-sm text-warn-ink">
           This form is {status === "draft" ? "a draft" : "closed"}. Set it to Open before sharing, or people will see “not accepting responses”.
         </p>
       )}

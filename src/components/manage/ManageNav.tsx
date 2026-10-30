@@ -36,13 +36,13 @@ function NavLink({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm hover:bg-sunk ${
-        active ? "bg-accent-soft font-semibold text-accent" : ""
+      className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm ${
+        active ? "bg-accent font-semibold text-on-accent" : "text-muted hover:bg-sunk"
       }`}
     >
       {children}
       {count !== undefined && (
-        <span className="ml-auto text-xs tabular-nums text-muted">
+        <span className={`ml-auto text-xs tabular-nums ${active ? "text-on-accent" : "text-muted"}`}>
           {count || ""}
         </span>
       )}

@@ -11,7 +11,7 @@ import { ShareDialog } from "./ShareDialog";
 import { PreviewDialog } from "./PreviewDialog";
 
 export const FORM_STATUS_LABEL = { draft: "Draft", open: "Open", closed: "Closed" } as const;
-const STATUS_CLASS = { draft: "bg-sunk text-muted", open: "bg-ok-soft text-ok", closed: "bg-bad-soft text-bad" } as const;
+const STATUS_CLASS = { draft: "bg-sunk text-muted", open: "bg-ok-soft text-ok-ink", closed: "bg-bad-soft text-bad-ink" } as const;
 
 export type FormKind = "intake" | "attendance" | "feedback";
 export type FormStatus = keyof typeof FORM_STATUS_LABEL;
@@ -95,7 +95,7 @@ export function FormCard({
       </label>
 
       {error && (
-        <p role="alert" className="rounded-md bg-bad-soft p-2 text-sm text-bad">
+        <p role="alert" className="rounded-md bg-bad-soft p-2 text-sm text-bad-ink">
           {error}
         </p>
       )}

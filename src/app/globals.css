@@ -1,54 +1,48 @@
 @import "tailwindcss";
 
-/* Design tokens ported from prototype.html :root (light + dark). */
+/* Colours and fonts from the CHII dashboard (its sign-in page and global styles). Light theme only.
+   Status and pillar text uses a darker shade (the *-ink tokens) so it meets WCAG AA on its tint.
+   The full colour is used for dots, bars and fills. */
 :root {
-  --bg: #f3f4f1;
+  --bg: #f8f9fa;
   --surface: #ffffff;
-  --sunk: #eceeea;
-  --ink: #17201c;
-  --muted: #5a6560;
-  --line: #dce0da;
-  --accent: #2f45a3;
-  --accent-soft: #e6e9f7;
-  --hent: #b8541a;
-  --hent-soft: #f8e9df;
-  --hemp: #0d7279;
-  --hemp-soft: #ddf0f1;
-  --heco: #7a3c96;
-  --heco-soft: #f0e5f5;
-  --ok: #2c7a4b;
-  --ok-soft: #e1f2e7;
-  --warn: #a86a12;
-  --warn-soft: #faefd9;
-  --bad: #b03a2e;
-  --bad-soft: #f8e3e0;
+  --sunk: #f3f7ff;
+  --ink: #172b4d;
+  --muted: #5e6c84;
+  --faint: #6b7280;
+  --line: #e5e7eb;
+  --line-strong: #d5d8e0;
+  --accent: #14306b;
+  --accent-hover: #0b2145;
+  --accent-soft: #f3f7ff;
+  --brand: #102c5e;
+  --on-accent: #ffffff;
+  --on-accent-muted: #d8e4f3;
+  --icon: #85b7eb;
+  --accent-2: #d45f2c;
+  --marker: #d17a86;
+  --ok: #16a34a;
+  --ok-soft: #ecfdf5;
+  --ok-ink: #0f6e56;
+  --warn: #e0a458;
+  --warn-soft: #fffbeb;
+  --warn-ink: #8a5a00;
+  --info: #85b7eb;
+  --info-soft: #e0ecff;
+  --info-ink: #185fa5;
+  --bad: #dc2626;
+  --bad-soft: #fef2f2;
+  --bad-ink: #a81b2d;
+  --hent: #0d6b72;
+  --hent-soft: #d5f5f6;
+  --hent-ink: #0d6b72;
+  --hemp: #7c3aed;
+  --hemp-soft: #ede9fe;
+  --hemp-ink: #6d28d9;
+  --heco: #042c53;
+  --heco-soft: #e8eef5;
+  --heco-ink: #042c53;
   color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111514;
-    --surface: #1a1f1d;
-    --sunk: #151917;
-    --ink: #e6ebe7;
-    --muted: #9ba6a0;
-    --line: #2c3431;
-    --accent: #93a3ff;
-    --accent-soft: #232a4a;
-    --hent: #f0965e;
-    --hent-soft: #3a2618;
-    --hemp: #5cc5cb;
-    --hemp-soft: #14302f;
-    --heco: #c99ae0;
-    --heco-soft: #2e2136;
-    --ok: #6fcb92;
-    --ok-soft: #173025;
-    --warn: #e3b05a;
-    --warn-soft: #332713;
-    --bad: #ef8a7e;
-    --bad-soft: #3a1e1b;
-    color-scheme: dark;
-  }
 }
 
 @theme inline {
@@ -57,28 +51,57 @@
   --color-sunk: var(--sunk);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-faint: var(--faint);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
-  --color-hent: var(--hent);
-  --color-hent-soft: var(--hent-soft);
-  --color-hemp: var(--hemp);
-  --color-hemp-soft: var(--hemp-soft);
-  --color-heco: var(--heco);
-  --color-heco-soft: var(--heco-soft);
+  --color-brand: var(--brand);
+  --color-on-accent: var(--on-accent);
+  --color-on-accent-muted: var(--on-accent-muted);
+  --color-icon: var(--icon);
+  --color-accent-2: var(--accent-2);
+  --color-marker: var(--marker);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
+  --color-ok-ink: var(--ok-ink);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
+  --color-warn-ink: var(--warn-ink);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-ink: var(--info-ink);
   --color-bad: var(--bad);
   --color-bad-soft: var(--bad-soft);
-  --font-sans: var(--font-public-sans), "Segoe UI", system-ui, sans-serif;
-  --font-display: var(--font-bricolage), "Segoe UI", system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, Menlo, monospace;
+  --color-bad-ink: var(--bad-ink);
+  --color-hent: var(--hent);
+  --color-hent-soft: var(--hent-soft);
+  --color-hent-ink: var(--hent-ink);
+  --color-hemp: var(--hemp);
+  --color-hemp-soft: var(--hemp-soft);
+  --color-hemp-ink: var(--hemp-ink);
+  --color-heco: var(--heco);
+  --color-heco-soft: var(--heco-soft);
+  --color-heco-ink: var(--heco-ink);
+  --font-sans: var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-mono: ui-monospace, Menlo, monospace;
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
+}
+
+/* Partner logos: greyscale until hovered, as on the dashboard sign-in. */
+.chii-partner-logo {
+  filter: grayscale(1);
+  opacity: 0.7;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+.chii-partner-logo:hover {
+  filter: grayscale(0);
+  opacity: 1;
 }

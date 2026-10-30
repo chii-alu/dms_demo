@@ -81,7 +81,7 @@ export function PublicForm({
       </div>
 
       {formError && (
-        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad">
+        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
           {formError}
         </p>
       )}
@@ -118,7 +118,7 @@ function Success({ kind, selective, result }: { kind: PublicFormKind; selective:
 
   return (
     <div role="status" className={`${card} flex flex-col gap-3`}>
-      <h2 className="font-display text-xl font-semibold text-ok">{heading}</h2>
+      <h2 className="font-display text-xl font-semibold text-ok-ink">{heading}</h2>
       {detail && <p className="text-sm">{detail}</p>}
       {result.pid && (
         <p className="text-sm">

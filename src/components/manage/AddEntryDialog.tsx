@@ -117,7 +117,7 @@ function AddEntryBody({
         }}
       />
       {formError && (
-        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad">
+        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
           {formError}
         </p>
       )}

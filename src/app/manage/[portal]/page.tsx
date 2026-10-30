@@ -130,7 +130,7 @@ export default async function OverviewPage({ params }: { params: Promise<{ porta
         ) : (
           <div className="overflow-x-auto rounded-[10px] border border-line bg-surface">
             <table className="w-full border-collapse text-sm">
-              <thead className="bg-sunk text-left text-xs font-semibold text-muted">
+              <thead className="bg-brand text-left text-xs font-semibold text-on-accent">
                 <tr>
                   <th className="px-3 py-2">Pillar</th>
                   <th className="px-3 py-2">Intervention</th>

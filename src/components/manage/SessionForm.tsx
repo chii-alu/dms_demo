@@ -102,13 +102,13 @@ export function SessionForm({
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4">
       <label className={label}>
-        Session title <span className="text-bad">*</span>
+        Session title <span className="text-bad-ink">*</span>
         <input className={input} {...register("title")} />
         {errors.title && <span className={fieldError}>{errors.title.message}</span>}
       </label>
 
       <label className={label}>
-        Session dates <span className="text-bad">*</span>
+        Session dates <span className="text-bad-ink">*</span>
         <input className={input} placeholder="2026-11-12, 2026-11-19" {...register("datesText")} />
         <span className="text-sm font-normal text-muted">
           One date for a single event. Several dates (comma separated) for multi-day events or cohort meetings. Attendance is taken for each.
@@ -152,11 +152,11 @@ export function SessionForm({
       {extraFields}
 
       {serverError && (
-        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad">
+        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
           {serverError}
         </p>
       )}
-      {saved && <p role="status" className="rounded-md bg-ok-soft p-3 text-sm text-ok">Saved.</p>}
+      {saved && <p role="status" className="rounded-md bg-ok-soft p-3 text-sm text-ok-ink">Saved.</p>}
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
         {deleteSlot}

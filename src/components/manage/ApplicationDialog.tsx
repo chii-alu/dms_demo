@@ -241,7 +241,7 @@ function ApplicationBody({
       </section>
 
       {error && (
-        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad">
+        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
           {error}
         </p>
       )}

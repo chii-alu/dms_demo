@@ -89,14 +89,14 @@ export function StaffAdmin({ rows }: { rows: StaffRow[] }) {
       </form>
 
       {error && (
-        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad">
+        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
           {error}
         </p>
       )}
 
       <div className="overflow-x-auto rounded-[10px] border border-line bg-surface">
         <table className="w-full border-collapse text-sm">
-          <thead className="bg-sunk text-left text-xs font-semibold text-muted">
+          <thead className="bg-brand text-left text-xs font-semibold text-on-accent">
             <tr>
               <th className="px-3 py-2">Email</th>
               <th className="px-3 py-2">Role</th>

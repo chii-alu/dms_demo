@@ -32,7 +32,7 @@ export function RubricCard({ sessionId, criteria, sessionTitle }: { sessionId: s
       </ul>
       <p className="mt-3 text-sm text-muted">
         Reviewers score each criterion 1–5. The weighted total out of 100 appears next to each application.
-        {warning && <b className="ml-1 text-bad">{warning}</b>}
+        {warning && <b className="ml-1 text-bad-ink">{warning}</b>}
       </p>
 
       <Dialog open={open} onClose={() => setOpen(false)} title="Selection rubric" description={sessionTitle}>
@@ -92,11 +92,11 @@ function RubricEditorBody({ sessionId, initial, onClose }: { sessionId: string; 
         <button type="button" className={btn} onClick={() => setRows((p) => [...p, { name: "New criterion", weight: 0 }])}>
           + Add criterion
         </button>
-        <span className={`text-sm ${warning ? "text-bad" : "text-muted"}`}>Total: {total}%</span>
+        <span className={`text-sm ${warning ? "text-bad-ink" : "text-muted"}`}>Total: {total}%</span>
       </div>
-      {warning && <p className="text-sm text-warn">{warning} You can still save.</p>}
+      {warning && <p className="text-sm text-warn-ink">{warning} You can still save.</p>}
       {error && (
-        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad">
+        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
           {error}
         </p>
       )}

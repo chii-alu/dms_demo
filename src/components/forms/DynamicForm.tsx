@@ -39,7 +39,7 @@ function FieldRow({
   error?: string;
   onChange: (v: unknown) => void;
 }) {
-  const req = field.required ? <span className="text-bad"> *</span> : null;
+  const req = field.required ? <span className="text-bad-ink"> *</span> : null;
   const err = error ? <span className={fieldError}>{error}</span> : null;
   const id = `f-${field.id}`;
 

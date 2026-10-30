@@ -115,14 +115,14 @@ export function AttendanceView({
           </div>
 
           {error && (
-            <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad">
+            <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
               {error}
             </p>
           )}
 
           <div className="overflow-x-auto rounded-[10px] border border-line bg-surface">
             <table className="w-full border-collapse text-sm">
-              <thead className="bg-sunk text-left text-xs font-semibold text-muted">
+              <thead className="bg-brand text-left text-xs font-semibold text-on-accent">
                 <tr>
                   <th className="px-3 py-2">Participant</th>
                   <th className="px-3 py-2">Gender</th>
@@ -153,7 +153,7 @@ export function AttendanceView({
                             disabled={busy}
                             onClick={() => toggle(e.participantId, isPresent)}
                             className={`min-w-24 rounded-md border px-3 py-1 text-sm ${
-                              isPresent ? "border-ok bg-ok-soft font-semibold text-ok" : "border-line bg-surface"
+                              isPresent ? "border-ok bg-ok-soft font-semibold text-ok-ink" : "border-line bg-surface"
                             }`}
                           >
                             {isPresent ? "Present" : "Mark present"}

@@ -26,7 +26,7 @@ export function AnonymiseButton({ pid, name }: { pid: string; name: string }) {
 
   return (
     <>
-      <button type="button" className={`${btn} border-bad text-bad`} onClick={() => setOpen(true)}>
+      <button type="button" className={`${btn} border-bad text-bad-ink`} onClick={() => setOpen(true)}>
         Remove personal details
       </button>
       <Dialog open={open} onClose={() => setOpen(false)} title="Remove personal details?">
@@ -34,7 +34,7 @@ export function AnonymiseButton({ pid, name }: { pid: string; name: string }) {
           {name} ({pid}) will be anonymised. Name, email, phone and demographic answers are removed. Sessions, attendance and feedback stay, so counts are unchanged. This cannot be undone.
         </p>
         {error && (
-          <p role="alert" className="mt-3 rounded-md bg-bad-soft p-3 text-sm text-bad">
+          <p role="alert" className="mt-3 rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
             {error}
           </p>
         )}

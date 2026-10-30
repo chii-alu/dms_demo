@@ -85,7 +85,7 @@ export function ReviewersCard({
         </div>
       )}
       {error && (
-        <p role="alert" className="mt-3 rounded-md bg-bad-soft p-2 text-sm text-bad">
+        <p role="alert" className="mt-3 rounded-md bg-bad-soft p-2 text-sm text-bad-ink">
           {error}
         </p>
       )}

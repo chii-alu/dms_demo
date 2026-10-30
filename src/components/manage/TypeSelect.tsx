@@ -33,7 +33,7 @@ export function TypeSelect({ interventionId, type }: { interventionId: string; t
         <option value="open">Open intervention</option>
         <option value="selective">Selective intervention</option>
       </select>
-      {error && <span className="text-sm text-bad">{error}</span>}
+      {error && <span className="text-sm text-bad-ink">{error}</span>}
     </div>
   );
 }

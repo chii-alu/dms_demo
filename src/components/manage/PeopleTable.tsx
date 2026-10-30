@@ -33,13 +33,13 @@ export type PersonRow = {
 };
 
 const STATUS_CLASS: Record<EntryStatus, string> = {
-  registered: "bg-ok-soft text-ok",
-  waitlisted: "bg-warn-soft text-warn",
+  registered: "bg-ok-soft text-ok-ink",
+  waitlisted: "bg-warn-soft text-warn-ink",
   cancelled: "bg-sunk text-muted",
   applied: "bg-accent-soft text-accent",
-  shortlisted: "bg-warn-soft text-warn",
-  selected: "bg-ok-soft text-ok",
-  rejected: "bg-bad-soft text-bad",
+  shortlisted: "bg-warn-soft text-warn-ink",
+  selected: "bg-ok-soft text-ok-ink",
+  rejected: "bg-bad-soft text-bad-ink",
   withdrawn: "bg-sunk text-muted",
 };
 
@@ -146,7 +146,7 @@ export function PeopleTable(props: {
       )}
 
       {error && (
-        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad">
+        <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
           {error}
         </p>
       )}
@@ -158,7 +158,7 @@ export function PeopleTable(props: {
       ) : (
         <div className="overflow-x-auto rounded-[10px] border border-line bg-surface">
           <table className="w-full border-collapse text-sm">
-            <thead className="bg-sunk text-left text-xs font-semibold text-muted">
+            <thead className="bg-brand text-left text-xs font-semibold text-on-accent">
               <tr>
                 <th className="px-3 py-2">
                   <input
@@ -225,7 +225,7 @@ export function PeopleTable(props: {
                     </select>
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">{isEligible(r.status, selective) ? `${r.attended} / ${props.dates.length}` : "—"}</td>
-                  <td className="px-3 py-2">{r.feedback ? <span className="rounded-md bg-ok-soft px-2 py-0.5 text-xs font-semibold text-ok">Given</span> : <span className="text-muted">—</span>}</td>
+                  <td className="px-3 py-2">{r.feedback ? <span className="rounded-md bg-ok-soft px-2 py-0.5 text-xs font-semibold text-ok-ink">Given</span> : <span className="text-muted">—</span>}</td>
                 </tr>
               ))}
             </tbody>

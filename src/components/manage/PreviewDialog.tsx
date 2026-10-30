@@ -62,8 +62,8 @@ function PreviewBody({ fields, onClose }: { fields: FieldSpec[]; onClose: () => 
           setResult("idle");
         }}
       />
-      {result === "ok" && <p role="status" className="rounded-md bg-ok-soft p-3 text-sm text-ok">All required answers are valid. This is what the participant would send.</p>}
-      {result === "invalid" && <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad">Some answers need attention.</p>}
+      {result === "ok" && <p role="status" className="rounded-md bg-ok-soft p-3 text-sm text-ok-ink">All required answers are valid. This is what the participant would send.</p>}
+      {result === "invalid" && <p role="alert" className="rounded-md bg-bad-soft p-3 text-sm text-bad-ink">Some answers need attention.</p>}
       <div className="flex justify-end gap-2 border-t border-line pt-4">
         <button type="button" className={btn} onClick={onClose}>
           Close
