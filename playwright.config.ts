@@ -6,8 +6,12 @@ export default defineConfig({
   testDir: "./e2e",
   use: { baseURL: `http://localhost:${PORT}` },
   projects: [
-    { name: "phone", use: { ...devices["iPhone 13"] } },
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+    // SPEC §11: public forms must work on a 360 px wide phone (Chromium emulation).
+    {
+      name: "phone-360",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true },
+    },
   ],
   webServer: {
     command: `npx next dev -p ${PORT}`,
