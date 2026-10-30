@@ -17,16 +17,16 @@ A data management platform for the MELA (Monitoring, Evaluation, Learning & Adap
 
 ## 2. Tech stack
 
-The MELA dashboard is already being built in **Next.js (React)**. Build this platform in the **same Next.js app** (preferred) or as a second app in the same monorepo, so both share auth, UI components, TypeScript types and the database.
+The repo is a **single Next.js app** that holds both this Intervention Manager (`/manage`) and the MELA analytics dashboard (`/dashboard`, built separately). They share auth, UI components, TypeScript types and the database. The app started as a fresh scaffold, so there was no existing dashboard to match.
 
 | Concern | Choice |
 |---|---|
-| Framework | Next.js (App Router) + React + TypeScript; match the dashboard's Next.js version |
+| Framework | Next.js 16 (App Router, latest stable) + React 19 + TypeScript. Next 16 renames middleware to `src/proxy.ts`; read `node_modules/next/dist/docs` before changing framework code |
 | Data mutations | Server Actions for staff screens; Route Handlers (`app/api/...`) for public form submissions |
 | Data reads | Server Components querying Supabase; TanStack Query only where client-side refresh is needed (attendance toggles, live counts) |
 | Forms & validation | react-hook-form + zod (same zod schemas reused on server) |
 | Styling | Tailwind CSS (port design tokens from the prototype's `:root`); reuse the dashboard's component library if it has one |
-| Backend / DB | Supabase (Postgres, Auth via `@supabase/ssr`, Row Level Security) |
+| Backend / DB | Supabase (Postgres, Auth via `@supabase/ssr`, Row Level Security). Development uses the local Supabase CLI stack (`npx supabase start`, which needs Docker). Secrets live in `.env.local` (git-ignored); `.env.example` lists the keys |
 | QR codes | `qrcode.react` (download as PNG/SVG for printing) |
 | Email notifications | Resend (or SMTP) called from Server Actions; log to `email_log` |
 | CSV export | Route Handler streaming CSV (`papaparse` or manual) |
