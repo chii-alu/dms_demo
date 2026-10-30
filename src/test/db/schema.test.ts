@@ -107,9 +107,9 @@ beforeAll(async () => {
 });
 
 describe("schema and RLS (SPEC §3, §8)", () => {
-  it("seeds the 18 interventions", async () => {
+  it("seeds the 17 interventions", async () => {
     const r = await query<{ n: number }>("select count(*)::int n from interventions");
-    expect(r.rows[0].n).toBe(18);
+    expect(r.rows[0].n).toBe(17);
   });
 
   it("generates participant IDs as MELA-0001, MELA-0002", async () => {
@@ -125,7 +125,7 @@ describe("schema and RLS (SPEC §3, §8)", () => {
 
   it("writes status_history when an entry status changes", async () => {
     const p = (await query<{ id: string }>("select id from participants limit 1")).rows[0].id;
-    const sid = (await createSession(ADMIN, await interventionId("Ventures"))).rows[0].id;
+    const sid = (await createSession(ADMIN, await interventionId("Venture Funding"))).rows[0].id;
     await db.exec(`insert into entries (session_id, participant_id, status) values ('${sid}', '${p}', 'applied')`);
     await db.exec(`set request.jwt.claim.sub = '${ADMIN}'`);
     await db.exec(`update entries set status = 'shortlisted' where participant_id = '${p}'`);
@@ -153,7 +153,7 @@ describe("schema and RLS (SPEC §3, §8)", () => {
 
 describe("replace_rubric", () => {
   it("replaces a selective session's criteria in one step", async () => {
-    const sid = (await createSession(ADMIN, await interventionId("Ventures"), { rubric: [{ name: "Old", weight: 100 }] })).rows[0].id;
+    const sid = (await createSession(ADMIN, await interventionId("Venture Funding"), { rubric: [{ name: "Old", weight: 100 }] })).rows[0].id;
     await asUser(ADMIN, "select public.replace_rubric($1, $2::jsonb)", [
       sid,
       JSON.stringify([{ name: "Motivation", weight: 60 }, { name: "Impact", weight: 40 }]),
@@ -196,7 +196,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
   });
 
   it("a selective session creates an application form, rubric and -APP code", async () => {
-    const ivId = await interventionId("Ventures");
+    const ivId = await interventionId("Venture Funding");
     const rubric = [
       { name: "Motivation and commitment", weight: 30 },
       { name: "Fit with eligibility criteria", weight: 30 },
@@ -204,7 +204,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
     ];
     const sid = (await createSession(ADMIN, ivId, { rubric })).rows[0].id;
     const intake = await query<{ code: string }>("select code from forms where session_id = $1 and kind = 'intake'", [sid]);
-    expect(intake.rows[0].code).toMatch(/^HENT-V-\d{3}-APP$/);
+    expect(intake.rows[0].code).toMatch(/^HENT-VF-\d{3}-APP$/);
     const crit = await query<{ name: string; weight: number; position: number }>(
       "select name, weight, position from rubric_criteria where session_id = $1 order by position",
       [sid],
@@ -269,7 +269,7 @@ describe("create_session (SPEC §4.2–4.4, §11)", () => {
     const rows = await query<{ name: string; sql: string }>(
       "select name, public.intervention_initials(name) as sql from interventions",
     );
-    expect(rows.rows.length).toBe(18);
+    expect(rows.rows.length).toBe(17);
     for (const r of rows.rows) {
       expect(r.sql, r.name).toBe(interventionInitials(r.name));
     }

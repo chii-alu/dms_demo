@@ -97,13 +97,13 @@ describe("submit_intake (SPEC §4.5–4.9)", () => {
   });
 
   it("always lands selective applications as applied", async () => {
-    const { codes } = await openSession("Ventures", { kind: "selective" });
+    const { codes } = await openSession("Venture Funding", { kind: "selective" });
     const r = await submitIntake(codes.intake, profile("app@example.org"), { motivation: "x" });
     expect(r.rows[0].r.status).toBe("applied");
   });
 
   it("rejects applications after the deadline", async () => {
-    const { codes } = await openSession("Ventures", { kind: "selective", deadline: "2000-01-01" });
+    const { codes } = await openSession("Venture Funding", { kind: "selective", deadline: "2000-01-01" });
     await expect(submitIntake(codes.intake, profile("late@example.org"))).rejects.toThrow(/Applications closed/);
   });
 
@@ -152,7 +152,7 @@ describe("submit_checkin (SPEC §4.10)", () => {
   });
 
   it("only selected applicants can check in to a selective session", async () => {
-    const { codes } = await openSession("Ventures", { kind: "selective" });
+    const { codes } = await openSession("Venture Funding", { kind: "selective" });
     await submitIntake(codes.intake, profile("pending@example.org"));
     await expect(checkin(codes.attendance, "pending@example.org", "2026-11-12")).rejects.toThrow(/not on the list/);
     await db.exec(`update entries set status = 'selected' where session_id = '${(await db.query<{ sid: string }>("select session_id as sid from forms where code = $1", [codes.attendance])).rows[0].sid}'`);

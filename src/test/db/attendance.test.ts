@@ -52,7 +52,7 @@ describe("set_attendance (SPEC §4.10 eligibility)", () => {
   });
 
   it("refuses to mark a pending applicant present", async () => {
-    const sid = await session("Ventures");
+    const sid = await session("Venture Funding");
     await register(sid, "pending2@example.org", "Pending");
     await expect(
       asUser(db, ADMIN, "select public.set_attendance($1, $2, '2026-11-12'::date, true)", [sid, await pid("pending2@example.org")]),
@@ -106,7 +106,7 @@ describe("add_walkin (SPEC §4.11)", () => {
   });
 
   it("refuses walk-ins at selective sessions", async () => {
-    const sid = await session("Ventures");
+    const sid = await session("Venture Funding");
     await expect(walkin(sid, "nope@example.org")).rejects.toThrow(/only for open sessions/);
   });
 

@@ -43,14 +43,14 @@ describe("set_entry_statuses (SPEC §4.15, §7 bulk status)", () => {
   });
 
   it("rejects a registration status on a selective session", async () => {
-    const { sid, intake } = await session("Ventures", true);
+    const { sid, intake } = await session("Venture Funding", true);
     await apply(intake, "app@example.org");
     const [id] = await entryIds(sid);
     await expect(asUser(db, ADMIN, "select public.set_entry_statuses($1, $2, 'registered')", [sid, [id]])).rejects.toThrow(/not used/);
   });
 
   it("bulk-updates applications and writes one history row per real change", async () => {
-    const { sid, intake } = await session("Ventures", true);
+    const { sid, intake } = await session("Venture Funding", true);
     for (const e of ["b1@example.org", "b2@example.org", "b3@example.org"]) await apply(intake, e);
     const ids = await entryIds(sid);
     const n = await asUser(db, ADMIN, "select public.set_entry_statuses($1, $2, 'selected') as n", [sid, ids.slice(0, 2)]);
@@ -77,7 +77,7 @@ describe("set_entry_statuses (SPEC §4.15, §7 bulk status)", () => {
 
 describe("save_scores (SPEC §4.13)", () => {
   it("saves the reviewer's criterion scores and replaces them on a second save", async () => {
-    const { sid, intake } = await session("Ventures", true);
+    const { sid, intake } = await session("Venture Funding", true);
     await apply(intake, "scored@example.org");
     const [id] = await entryIds(sid);
     const crit = (await db.query<{ id: string; name: string }>("select id, name from rubric_criteria where session_id = $1 order by position", [sid])).rows;
@@ -97,7 +97,7 @@ describe("save_scores (SPEC §4.13)", () => {
   });
 
   it("ignores criteria from another session", async () => {
-    const a = await session("Ventures", true);
+    const a = await session("Venture Funding", true);
     const b = await session("Hackathon", true);
     await apply(a.intake, "cross@example.org");
     const [id] = await entryIds(a.sid);

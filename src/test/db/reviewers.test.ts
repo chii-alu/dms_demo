@@ -15,7 +15,7 @@ async function application(email: string, title: string, rubric = true) {
     db,
     ADMIN,
     `select public.create_session($1, $2, '{2099-03-01}'::date[], 'Online', null, null, null, null, '[]', '[]', $3::jsonb) as id`,
-    [await ivId("Ventures"), title, rubric ? JSON.stringify([{ name: "Impact", weight: 60 }, { name: "Fit", weight: 40 }]) : null],
+    [await ivId("Venture Funding"), title, rubric ? JSON.stringify([{ name: "Impact", weight: 60 }, { name: "Fit", weight: 40 }]) : null],
   );
   const sid = r.rows[0].id as string;
   await db.exec(`update forms set status = 'open' where session_id = '${sid}'`);

@@ -36,7 +36,7 @@ beforeAll(async () => {
 
 describe("v_session_summary", () => {
   it("counts intake, eligible, attendance and feedback for a selective session", async () => {
-    const { sid, code } = await session("Ventures", true);
+    const { sid, code } = await session("Venture Funding", true);
     for (const e of ["r1@example.org", "r2@example.org", "r3@example.org"]) await apply(code, e);
     // Select the first two, then mark one of them present.
     const ids = (await db.query<{ id: string }>("select id from entries where session_id = $1 order by submitted_at, id", [sid])).rows.map((r) => r.id);
@@ -80,7 +80,7 @@ describe("v_session_summary", () => {
 
 describe("v_selection_funnel", () => {
   it("steps from applied to completed", async () => {
-    const { sid, code } = await session("Ventures", true);
+    const { sid, code } = await session("Venture Funding", true);
     for (const e of ["f1@example.org", "f2@example.org", "f3@example.org"]) await apply(code, e);
     const ids = (await db.query<{ id: string }>("select id from entries where session_id = $1 order by submitted_at, id", [sid])).rows.map((r) => r.id);
     await asUser(db, ADMIN, "select public.set_entry_statuses($1, $2, 'shortlisted')", [sid, [ids[0]]]);
