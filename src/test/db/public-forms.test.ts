@@ -133,7 +133,7 @@ describe("submit_checkin (SPEC §4.10)", () => {
 
   it("rejects an email that is not registered for the session", async () => {
     const { codes } = await openSession("Masterclass");
-    await expect(checkin(codes.attendance, "nobody@example.org", "2026-11-12")).rejects.toThrow(/not on the list/);
+    await expect(checkin(codes.attendance, "nobody@example.org", "2026-11-12")).rejects.toThrow(/No participant found/);
   });
 
   it("rejects a date that is not a session date", async () => {

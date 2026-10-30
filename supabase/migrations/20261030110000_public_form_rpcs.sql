@@ -54,6 +54,7 @@ security definer
 set search_path = ''
 as $$
 declare
+  v_form_id uuid;
   v_form_status public.form_status;
   v_session_id uuid;
   v_session_kind public.session_kind;
@@ -66,11 +67,11 @@ declare
   v_count int;
   v_status public.entry_status;
 begin
-  select v_form_status, v_session_id, s.kind, s.capacity, s.application_deadline
-    into v_form_status, v_session_id, v_session_kind, v_capacity, v_deadline
+  select f.id, f.status, f.session_id, s.kind, s.capacity, s.application_deadline
+    into v_form_id, v_form_status, v_session_id, v_session_kind, v_capacity, v_deadline
   from public.forms f
-  join public.sessions s on s.id = v_session_id
-  where f.code = p_code and v_kind = 'intake';
+  join public.sessions s on s.id = f.session_id
+  where f.code = p_code and f.kind = 'intake';
   if not found then
     raise exception 'Form not found' using errcode = 'P0002';
   end if;
@@ -155,11 +156,11 @@ declare
   v_entry public.entries%rowtype;
   v_eligible public.entry_status;
 begin
-  select v_form_status, v_session_id, s.kind, s.dates
+  select f.status, f.session_id, s.kind, s.dates
     into v_form_status, v_session_id, v_session_kind, v_dates
   from public.forms f
-  join public.sessions s on s.id = v_session_id
-  where f.code = p_code and v_kind = 'attendance';
+  join public.sessions s on s.id = f.session_id
+  where f.code = p_code and f.kind = 'attendance';
   if not found then
     raise exception 'Form not found' using errcode = 'P0002';
   end if;
@@ -218,10 +219,10 @@ declare
   v_session_id uuid;
   v_participant public.participants%rowtype;
 begin
-  select v_form_status, v_session_id
+  select f.status, f.session_id
     into v_form_status, v_session_id
   from public.forms f
-  where f.code = p_code and v_kind = 'feedback';
+  where f.code = p_code and f.kind = 'feedback';
   if not found then
     raise exception 'Form not found' using errcode = 'P0002';
   end if;
