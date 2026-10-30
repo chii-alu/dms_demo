@@ -7,8 +7,10 @@ import { defaultFeedbackQuestions, defaultIntakeQuestions, DEFAULT_RUBRIC, type 
 import { formKindSchema, formStatusSchema, questionsSchema, rubricSchema, sessionInputSchema, type SessionInput } from "@/lib/sessions/schema";
 import type { Question } from "@/lib/forms/questions";
 import { z } from "zod";
-import { ENTRY_STATUSES } from "@/lib/sessions/status";
-import { isIsoDate } from "@/lib/dates";
+import { ENTRY_STATUSES, type EntryStatus } from "@/lib/sessions/status";
+import { formatDate, formatDateRange, isIsoDate } from "@/lib/dates";
+import { notifyText } from "@/lib/notify";
+import { sendEmail } from "@/lib/email/send";
 
 // Server Actions return a result instead of throwing, so forms can show the message.
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
@@ -341,4 +343,74 @@ export async function addWalkin(sessionId: string, date: string, profile: Record
 
   revalidatePath(`/manage/sessions/${sessionId}`, "layout");
   return { ok: true, data: { pid: (data as { pid: string }).pid } };
+}
+
+// Email the participant about their current status (SPEC §9). Every attempt is written to email_log.
+export async function sendParticipantEmail(entryId: string): Promise<ActionResult<{ status: "sent" | "not_configured" }>> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+  if (!uuidSchema.safeParse(entryId).success) return fail("That entry could not be found.");
+
+  const { data: e, error: readError } = await supabase
+    .from("entries")
+    .select(
+      "id, status, participant_id, session_id, participants(pid, name, email), sessions(title, pillar, dates, venue, application_deadline, interventions(name))",
+    )
+    .eq("id", entryId)
+    .maybeSingle();
+  if (readError || !e) return fail("That entry could not be found.");
+
+  const p = e.participants as unknown as { pid: string; name: string; email: string };
+  const s = e.sessions as unknown as {
+    title: string;
+    pillar: string;
+    dates: string[];
+    venue: string | null;
+    application_deadline: string | null;
+    interventions: { name: string };
+  };
+
+  const body = notifyText({
+    firstName: p.name.split(" ")[0],
+    pid: p.pid,
+    sessionTitle: s.title,
+    interventionName: s.interventions.name,
+    pillar: s.pillar,
+    datesText: formatDateRange(s.dates),
+    venue: s.venue,
+    deadline: s.application_deadline ? formatDate(s.application_deadline) : null,
+    status: e.status as EntryStatus,
+  });
+  const subject = `${s.title}: update from ${s.pillar}`;
+
+  const result = await sendEmail({ to: p.email, subject, text: body });
+
+  const { data: user } = await supabase.auth.getUser();
+  await supabase.from("email_log").insert({
+    entry_id: e.id,
+    participant_id: e.participant_id,
+    to_email: p.email,
+    subject,
+    body,
+    status: result.status === "sent" ? "sent" : result.status === "failed" ? "failed" : "not_configured",
+    provider_message_id: result.status === "sent" ? result.providerMessageId : null,
+    error: result.status === "failed" ? result.error : null,
+    sent_by: user.user?.id ?? null,
+  });
+
+  if (result.status === "failed") return fail(result.error);
+  return { ok: true, data: { status: result.status } };
+}
+
+// §8: remove a participant's personal details on request. Admin only; the database checks this too.
+export async function anonymiseParticipant(pid: string): Promise<ActionResult> {
+  const supabase = await signedInClient();
+  if (!supabase) return fail("Please sign in again.");
+  if (!/^MELA-\d{4,}$/.test(pid)) return fail("Unknown participant.");
+
+  const { error } = await supabase.rpc("anonymise_participant", { p_pid: pid });
+  if (error) return fail(explain(error));
+
+  revalidatePath("/manage/registry", "layout");
+  return { ok: true, data: undefined };
 }

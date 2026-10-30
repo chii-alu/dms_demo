@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveEntryScores, setEntryStatuses } from "@/app/manage/actions";
+import { saveEntryScores, sendParticipantEmail, setEntryStatuses } from "@/app/manage/actions";
 import { Dialog } from "@/components/ui/Dialog";
 import { btn, btnPri, input, label } from "@/components/ui/styles";
 import { STATUS_LABEL, type EntryStatus } from "@/lib/sessions/status";
@@ -78,6 +78,8 @@ function ApplicationBody({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [emailNote, setEmailNote] = useState<string | null>(null);
 
   const mine = reviewerScore(criteria, myScores);
   const others = { ...row.scoresByReviewer, [userId]: myScores };
@@ -104,6 +106,29 @@ function ApplicationBody({
     setSaving(false);
     router.refresh();
     onClose();
+  };
+
+  // Saves a changed status first, so the email matches what the participant will see on record.
+  const sendMail = async () => {
+    setError(null);
+    setEmailNote(null);
+    setSending(true);
+    if (status !== row.status) {
+      const saved = await setEntryStatuses(sessionId, [row.entryId], status);
+      if (!saved.ok) {
+        setSending(false);
+        return setError(saved.error);
+      }
+    }
+    const r = await sendParticipantEmail(row.entryId);
+    setSending(false);
+    if (!r.ok) return setError(r.error);
+    setEmailNote(
+      r.data.status === "sent"
+        ? `Email sent to ${row.email}.`
+        : "Email is not set up yet. Add RESEND_API_KEY and MELA_EMAIL_FROM, or copy the message instead.",
+    );
+    router.refresh();
   };
 
   const copyMessage = async () => {
@@ -220,11 +245,17 @@ function ApplicationBody({
           {error}
         </p>
       )}
+      {emailNote && <p role="status" className="rounded-md bg-accent-soft p-3 text-sm text-accent">{emailNote}</p>}
 
       <div className="flex flex-wrap justify-between gap-2 border-t border-line pt-4">
-        <button type="button" className={btn} onClick={copyMessage}>
-          {copied ? "Copied" : "Copy message to participant"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={btn} onClick={copyMessage}>
+            {copied ? "Copied" : "Copy message to participant"}
+          </button>
+          <button type="button" className={btn} onClick={sendMail} disabled={sending}>
+            {sending ? "Sending…" : "Send email"}
+          </button>
+        </div>
         <div className="flex gap-2">
           <button type="button" className={btn} onClick={onClose}>
             Cancel

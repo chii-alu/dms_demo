@@ -7,6 +7,7 @@ import { STATUS_LABEL, type EntryStatus } from "@/lib/sessions/status";
 import { isCompleted } from "@/lib/rules/completion";
 import { sessionStatus } from "@/lib/rules/session-status";
 import { card } from "@/components/ui/styles";
+import { AnonymiseButton } from "@/components/manage/AnonymiseButton";
 
 type Journey = {
   status: EntryStatus;
@@ -32,6 +33,11 @@ export default async function ParticipantPage({ params }: { params: Promise<{ pi
     .maybeSingle();
   if (!p) notFound();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: staff } = user ? await supabase.from("staff_roles").select("role").eq("user_id", user.id).maybeSingle() : { data: null };
+
   const [{ data: entries }, { data: attendance }, { data: feedback }] = await Promise.all([
     supabase
       .from("entries")
@@ -54,6 +60,11 @@ export default async function ParticipantPage({ params }: { params: Promise<{ pi
         <p className="font-mono text-sm text-muted">
           {p.pid} · {p.email}
         </p>
+        {staff?.role === "admin" && (
+          <div className="mt-3">
+            <AnonymiseButton pid={p.pid} name={p.name} />
+          </div>
+        )}
       </div>
 
       <div className={`${card} grid gap-3 text-sm sm:grid-cols-3`}>
