@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, ChevronDown, FileText, TrendingUp, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, FileText, TrendingUp, Zap } from "lucide-react";
 import { signIn } from "./actions";
 
 const messages: Record<string, string> = {
@@ -50,7 +50,7 @@ export default async function LoginPage({
         <div className="flex w-full flex-col justify-between px-11 py-8 lg:w-1/2">
           <div className="mx-auto w-full max-w-[19rem]">
             <h1 className="font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.015em] text-ink">Welcome Back</h1>
-            <p className="mt-2 text-sm leading-relaxed text-muted">Please sign in to access the intervention manager</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">Please sign in to access the intervention tracker</p>
 
             {error && messages[error] && (
               <p role="alert" className="mt-5 rounded-md bg-bad-soft p-3 text-sm text-bad-ink">
@@ -61,24 +61,19 @@ export default async function LoginPage({
             <form action={signIn} className="mt-6">
               <input type="hidden" name="next" value={next && next !== "/manage" ? next : ""} />
 
-              <div className="mb-3.5">
-                <label htmlFor="portal" className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.1em] text-faint">
-                  Programme
-                </label>
-                <div className="relative">
-                  <select id="portal" name="portal" required defaultValue="" className={`${FIELD} appearance-none pr-10`}>
-                    <option value="" disabled>
-                      Select a programme
-                    </option>
-                    {PROGRAMMES.map((p) => (
-                      <option key={p.id} value={p.id}>
+              <fieldset className="mb-3.5">
+                <legend className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.1em] text-faint">Programme</legend>
+                <div className="grid grid-cols-2 gap-2">
+                  {PROGRAMMES.map((p) => (
+                    <label key={p.id} className="cursor-pointer">
+                      <input type="radio" name="portal" value={p.id} required className="peer sr-only" />
+                      <span className="flex h-10 items-center justify-center rounded-[6px] border border-line-strong bg-surface text-sm font-semibold text-ink hover:border-muted peer-checked:border-accent peer-checked:bg-accent-soft peer-checked:text-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent/20">
                         {p.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={18} aria-hidden className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted" />
+                      </span>
+                    </label>
+                  ))}
                 </div>
-              </div>
+              </fieldset>
 
               <div className="mb-3.5">
                 <label htmlFor="email" className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.1em] text-faint">

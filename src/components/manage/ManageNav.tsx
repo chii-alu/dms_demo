@@ -193,10 +193,7 @@ export function ManageNav({
           Dashboard
         </Link>
         <form action={signOutAction}>
-          <button
-            type="submit"
-            className="px-2.5 py-1.5 text-muted hover:text-ink"
-          >
+          <button type="submit" className="px-2.5 py-1.5 text-muted hover:text-ink">
             Sign out
           </button>
         </form>

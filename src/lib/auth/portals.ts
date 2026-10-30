@@ -1,4 +1,4 @@
-// Portals are the separate addresses of the manager: /manage/admin for the whole MELA view,
+// Portals are the separate addresses of the tracker: /manage/admin for the whole MELA view,
 // and /manage/hent, /manage/hemp, /manage/heco for one pillar each. Admins can open every portal.
 // The address only chooses the view. RLS still decides what data comes back.
 export const PORTALS = ["admin", "heco", "hemp", "hent"] as const;

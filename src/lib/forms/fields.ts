@@ -10,6 +10,8 @@ export type FieldSpec = {
   type: FieldType;
   required: boolean;
   options?: string[];
+  // Shown only when the answer to question `id` is one of `equals`. Hidden fields are not asked or saved.
+  showWhen?: { id: string; equals: string[] };
 };
 
 export type PublicFormKind = "intake" | "attendance" | "feedback";
@@ -20,6 +22,7 @@ const fromQuestion = (q: Question): FieldSpec => ({
   type: q.type,
   required: q.required,
   options: q.options,
+  showWhen: q.showWhen,
 });
 
 // Fields for each public form (SPEC §5). Attendance asks for an email and a session date.
@@ -38,6 +41,22 @@ export function publicFields(kind: PublicFormKind, questions: Question[], sessio
   }
   const core = kind === "intake" ? INTAKE_CORE : FEEDBACK_CORE;
   return [...core, ...questions.map(fromQuestion)];
+}
+
+// Whether a field is asked, given the answers so far.
+export function isVisible(field: FieldSpec, values: Record<string, unknown>): boolean {
+  if (!field.showWhen) return true;
+  const answer = values[field.showWhen.id];
+  return typeof answer === "string" && field.showWhen.equals.includes(answer);
+}
+
+export function visibleFields(fields: FieldSpec[], values: Record<string, unknown>): FieldSpec[] {
+  return fields.filter((f) => isVisible(f, values));
+}
+
+// Checks the answers against only the questions that are showing. Answers to hidden questions are dropped.
+export function validateAnswers(fields: FieldSpec[], values: Record<string, unknown>) {
+  return buildValuesSchema(visibleFields(fields, values)).safeParse(values);
 }
 
 const isEmpty = (v: unknown) => v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);

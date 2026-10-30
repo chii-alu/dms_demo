@@ -1,4 +1,4 @@
-// Server-safe badges used across the manager (prototype: .chip, .st).
+// Server-safe badges used across the tracker (prototype: .chip, .st).
 import type { SessionStatus } from "@/lib/rules/session-status";
 
 const PILLAR_CLASS: Record<string, string> = {

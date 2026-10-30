@@ -32,6 +32,7 @@ export default async function ManageLayout({
     redirect(`/manage/${own}`);
   }
   const isAdmin = staff.role === "admin";
+  const heading = requested === "admin" ? "MELA" : `${PORTAL_LABEL[requested].toUpperCase()} MANAGEMENT TRACKER`;
   const shownPillars = pillarsForPortal(requested);
 
   const { data: rows, error } = await supabase
@@ -59,8 +60,8 @@ export default async function ManageLayout({
         <ManageNav
           portal={requested}
           pillars={pillars}
-          heading={requested === "admin" ? "MELA" : `${PORTAL_LABEL[requested].toUpperCase()} MANAGEMENT TRACKER`}
-          subtitle={requested === "admin" ? "Intervention manager" : undefined}
+          heading={heading}
+          subtitle={requested === "admin" ? "Intervention tracker" : undefined}
           signOutAction={signOut}
           isAdmin={isAdmin}
           showStaffAccess={isAdmin && requested === "admin"}

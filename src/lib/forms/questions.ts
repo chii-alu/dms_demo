@@ -37,6 +37,8 @@ export const questionSchema = z
     type: z.enum(QUESTION_TYPES),
     options: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
     required: z.boolean(),
+    // Shown only when the answer to question `id` is one of `equals`.
+    showWhen: z.object({ id: z.string().min(1).max(64), equals: z.array(z.string().min(1)).min(1) }).optional(),
   })
   .superRefine((q, ctx) => {
     if (CHOICE_TYPES.includes(q.type) && (!q.options || q.options.length === 0)) {

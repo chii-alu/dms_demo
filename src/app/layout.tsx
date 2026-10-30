@@ -8,7 +8,7 @@ const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["lati
 
 export const metadata: Metadata = {
   title: "MELA",
-  description: "MELA monitoring, evaluation, learning and adaptation: intervention manager and dashboard",
+  description: "MELA monitoring, evaluation, learning and adaptation: intervention tracker and dashboard",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

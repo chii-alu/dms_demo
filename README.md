@@ -1,8 +1,8 @@
 # dms_demo
 
-MELA Intervention Manager and dashboard, in one Next.js app.
+MELA Intervention Tracker and dashboard, in one Next.js app.
 
-- `/manage`: Intervention Manager (staff). Spec: [SPEC.md](SPEC.md)
+- `/manage`: Intervention Tracker (staff). Spec: [SPEC.md](SPEC.md)
 - `/dashboard`: analytics dashboard (placeholder)
 - `/f/[code]`: public forms
 

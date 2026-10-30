@@ -1,4 +1,4 @@
-# MELA Intervention Manager — Build Spec
+# MELA Intervention Tracker — Build Spec
 
 > Hand this file to the coding agent together with `prototype.html` (the clickable prototype). The prototype is the source of truth for screens, wording and behaviour; this spec defines the architecture, data model and rules for the production React build.
 
@@ -17,7 +17,7 @@ A data management platform for the MELA (Monitoring, Evaluation, Learning & Adap
 
 ## 2. Tech stack
 
-The repo is a **single Next.js app** that holds both this Intervention Manager (`/manage`) and the MELA analytics dashboard (`/dashboard`, built separately). They share auth, UI components, TypeScript types and the database. The app started as a fresh scaffold, so there was no existing dashboard to match.
+The repo is a **single Next.js app** that holds both this Intervention Tracker (`/manage`) and the MELA analytics dashboard (`/dashboard`, built separately). They share auth, UI components, TypeScript types and the database. The app started as a fresh scaffold, so there was no existing dashboard to match.
 
 | Concern | Choice |
 |---|---|
@@ -40,7 +40,7 @@ The dashboard reads the reporting views in §3 directly from the same Supabase d
 |---|---|---|
 | `/` | Landing page with links to Manage and Dashboard | public |
 | `/login` | Staff sign-in (email and password) | public |
-| `/manage/...` | Intervention Manager (all staff screens in §7) | staff role |
+| `/manage/...` | Intervention Tracker (all staff screens in §7) | staff role |
 | `/dashboard/...` | MELA analytics dashboard (placeholder until built) | staff role |
 | `/f/[code]` | Public forms (intake, check-in, feedback) | public, mobile-first |
 | `/api/forms/[code]/submit` | Public submission endpoint (rate-limited) | public |

@@ -1,6 +1,6 @@
 "use client";
 
-import type { FieldSpec } from "@/lib/forms/fields";
+import { visibleFields, type FieldSpec } from "@/lib/forms/fields";
 import { formatDate } from "@/lib/dates";
 import { input, fieldError } from "@/components/ui/styles";
 
@@ -21,7 +21,7 @@ export function DynamicForm({
 }) {
   return (
     <div className="flex flex-col gap-5">
-      {fields.map((f) => (
+      {visibleFields(fields, values).map((f) => (
         <FieldRow key={f.id} field={f} value={values[f.id]} error={errors[f.id]} onChange={(v) => onChange(f.id, v)} />
       ))}
     </div>
