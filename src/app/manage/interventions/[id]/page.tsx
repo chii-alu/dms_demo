@@ -43,7 +43,11 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
   const firstDate = (s: SessionRow) => [...s.dates].sort()[0] ?? "";
   const sorted = [...sessions].sort((a, b) => firstDate(b).localeCompare(firstDate(a)));
   const selective = iv.type === "selective";
-  const registrations = sessions.reduce((n, s) => n + (s.entries[0]?.count ?? 0), 0);
+  const sessionIds = sessions.map((s) => s.id);
+  const { data: people } = sessionIds.length
+    ? await supabase.from("entries").select("participant_id").in("session_id", sessionIds)
+    : { data: [] as { participant_id: string }[] };
+  const uniqueParticipants = new Set((people ?? []).map((p) => p.participant_id)).size;
   const upcoming = sessions.filter((s) => sessionStatus(s.dates, today) === "Upcoming").length;
 
   const feedbackCount = sessions.length
@@ -65,11 +69,17 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
 
   return (
     <section>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <nav className="flex flex-wrap gap-1.5 text-sm text-muted">
+        <Link href="/manage" className="text-accent hover:underline">Overview</Link>
+        <span>/</span>
+        <span>{iv.pillar}</span>
+      </nav>
+
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <PillarChip pillar={iv.pillar} />
-            {isAdmin ? <TypeSelect interventionId={iv.id} type={iv.type} /> : <TypeChip type={iv.type} />}
+            <TypeChip type={iv.type} />
           </div>
           <h1 className="mt-2 font-display text-3xl font-semibold">{iv.name}</h1>
           <p className="mt-2 max-w-2xl text-muted">
@@ -79,18 +89,21 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
             Each new session gets its own copy of these forms, which you can then edit for that session.
           </p>
         </div>
-        <NewSessionDialog
-          interventionId={iv.id}
-          interventionName={iv.name}
-          pillar={iv.pillar}
-          selective={selective}
-          copyOptions={copyOptions}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {isAdmin && <TypeSelect interventionId={iv.id} type={iv.type} />}
+          <NewSessionDialog
+            interventionId={iv.id}
+            interventionName={iv.name}
+            pillar={iv.pillar}
+            selective={selective}
+            copyOptions={copyOptions}
+          />
+        </div>
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi value={sessions.length} label="sessions" />
-        <Kpi value={registrations} label={selective ? "applications" : "registrations"} />
+        <Kpi value={uniqueParticipants} label="unique participants" />
         <Kpi value={upcoming} label="upcoming" />
         <Kpi value={feedbackCount ?? 0} label="feedback responses" />
       </div>
