@@ -92,7 +92,7 @@ function buildFields(form: PublicFormData): FieldSpec[] {
 
 // Attendance defaults to today if it is a session date, else the last session date so far, else the first.
 function defaultsFor(form: PublicFormData): Record<string, unknown> {
-  if (form.kind !== "attendance") return { consent: undefined };
+  if (form.kind !== "attendance") return {};
   const dates = [...form.session.dates].sort();
   const today = form.today;
   const day = dates.includes(today) ? today : dates.filter((d) => d <= today).pop() ?? dates[0];
