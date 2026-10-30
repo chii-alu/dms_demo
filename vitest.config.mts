@@ -4,11 +4,9 @@ import path from "node:path";
 
 export default defineConfig({
   plugins: [react()],
-  resolve: { alias: { "@": path.resolve(__dirname, "src") } },
+  resolve: { alias: { "@": path.resolve(import.meta.dirname, "src") } },
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],
-    // Pure rule tests (src/lib/rules) run in node; jsdom only where a test needs it.
-    globals: false,
   },
 });
