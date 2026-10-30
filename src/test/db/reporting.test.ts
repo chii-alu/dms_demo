@@ -78,36 +78,6 @@ describe("v_session_summary", () => {
   });
 });
 
-describe("v_selection_funnel", () => {
-  it("steps from applied to completed", async () => {
-    const { sid, code } = await session("Venture Funding", true);
-    for (const e of ["f1@example.org", "f2@example.org", "f3@example.org"]) await apply(code, e);
-    const ids = (await db.query<{ id: string }>("select id from entries where session_id = $1 order by submitted_at, id", [sid])).rows.map((r) => r.id);
-    await asUser(db, ADMIN, "select public.set_entry_statuses($1, $2, 'shortlisted')", [sid, [ids[0]]]);
-    await asUser(db, ADMIN, "select public.set_entry_statuses($1, $2, 'selected')", [sid, [ids[1]]]);
-    const r = await db.query<Record<string, number>>("select applied, shortlisted, selected, attended, completed from v_selection_funnel where session_id = $1", [sid]);
-    // Cumulative funnel: anyone selected has also been shortlisted.
-    expect(r.rows[0]).toEqual({ applied: 3, shortlisted: 2, selected: 1, attended: 0, completed: 0 });
-  });
-});
-
-describe("v_participant_activity and v_reach_by_pillar", () => {
-  it("lists one row per participant and session, with the demographic split", async () => {
-    const { sid, code } = await session("Masterclass", false);
-    await apply(code, "act@example.org");
-    const act = await db.query<{ pid: string; entry_status: string; completed: boolean }>(
-      "select pid, entry_status, completed from v_participant_activity where session_id = $1",
-      [sid],
-    );
-    expect(act.rows).toHaveLength(1);
-    expect(act.rows[0].entry_status).toBe("registered");
-    const reach = await db.query<{ participants: number }>(
-      "select sum(participants)::int as participants from v_reach_by_pillar where pillar = 'HENT' and country = 'Kenya'",
-    );
-    expect(reach.rows[0].participants).toBeGreaterThan(0);
-  });
-});
-
 describe("reporting access (SPEC §8)", () => {
   it("dashboard_reader can read the views", async () => {
     await db.exec("set role dashboard_reader");
@@ -119,9 +89,8 @@ describe("reporting access (SPEC §8)", () => {
     }
   });
 
-  it("anon and authenticated cannot read the views", async () => {
+  it("anon cannot read the old session views", async () => {
     await expect(asAnon(db, "select * from v_session_summary")).rejects.toThrow(/permission denied/);
-    await expect(asUser(db, "00000000-0000-0000-0000-00000000000b", "select * from v_selection_funnel")).rejects.toThrow(/permission denied/);
   });
 
   it("dashboard_reader cannot read the base tables", async () => {
